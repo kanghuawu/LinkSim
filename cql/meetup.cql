@@ -13,6 +13,7 @@ count int,
 event_url text,
 lon float,
 lat float,
+topics set<text>,
 PRIMARY KEY ((mdate), count, group_country, event_id));
 
 
@@ -28,4 +29,5 @@ count int,
 event_url text,
 lon float,
 lat float,
+topics set<text>,
 PRIMARY KEY ((mdate), count, group_state, event_id));
