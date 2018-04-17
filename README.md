@@ -10,41 +10,67 @@
 
 ```shell
 $ curl -s -L http://stream.meetup.com/2/rsvps | jsonpp
-
 {
   "venue": {
-    "venue_name": "Please Register via the Link Below To Receive the Address",
-    "lon": 0,
-    "lat": 0,
-    "venue_id": 25603330
+    "venue_name": "West Des Moines Public Library",
+    "lon": -93.759647,
+    "lat": 41.564202,
+    "venue_id": 746276
   },
-  # skip details ...
-    "group_city": "Del Mar",
+  "visibility": "public",
+  "response": "yes",
+  "guests": 0,
+  "member": {
+    "member_id": 180958822,
+    "member_name": "Michelle"
+  },
+  "rsvp_id": 1723590801,
+  "mtime": 1523932806644,
+  "event": {
+    "event_name": "Critical Bible Study with Randy Henderson",
+    "event_id": "249388268",
+    "time": 1524697200000,
+    "event_url": "https:\/\/www.meetup.com\/Iowa-Atheists-and-Freethinkers\/events\/249388268\/"
+  },
+  "group": {
+    "group_topics": [
+      {
+        "urlkey": "atheist-outreach",
+        "topic_name": "Atheist Outreach"
+      },
+      {
+        "urlkey": "discussing-atheism-skepticism-and-secularism",
+        "topic_name": "Discussing atheism skepticism and secularism"
+      },
+      {
+        "urlkey": "secularism",
+        "topic_name": "Secularism"
+      },
+      {
+        "urlkey": "atheists",
+        "topic_name": "Atheist"
+      },
+      {
+        "urlkey": "agnostic",
+        "topic_name": "Agnostic"
+      },
+      {
+        "urlkey": "humanism",
+        "topic_name": "Humanism"
+      },
+      {
+        "urlkey": "churchandstate",
+        "topic_name": "Separation of Church and State"
+      }
+    ],
+    "group_city": "Des Moines",
     "group_country": "us",
-    "group_id": 1711159,
-    "group_name": "San Diego Investment Club",
-    "group_lon": -117.23,
-    "group_urlname": "San-Diego-Investment-Club-SDIC",
-    "group_state": "CA",
-    "group_lat": 32.96
+    "group_id": 1066657,
+    "group_name": "Iowa Atheists and Freethinkers",
+    "group_lon": -93.63,
+    "group_urlname": "Iowa-Atheists-and-Freethinkers",
+    "group_state": "IA",
+    "group_lat": 41.6
   }
 }
-{
-  "venue": {
-    "venue_name": "Bar Italia",
-    "lon": 151.156815,
-    "lat": -33.881168,
-    "venue_id": 1734521
-  },
-  # skip details ...
-    "group_city": "Sydney",
-    "group_country": "au",
-    "group_id": 26510493,
-    "group_name": "Sunday coffee  50's +",
-    "group_lon": 151.21,
-    "group_urlname": "Sunday-coffee-50s",
-    "group_lat": -33.87
-  }
-}
-# new incoming stream reservations...
 ```
