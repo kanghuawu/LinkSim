@@ -6,8 +6,6 @@
   * [raw data](http://stream.meetup.com/2/rsvps) can be curl as show below
   * data render in [browser](http://meetup.github.io/stream/rsvpTicker/)
 
-* [SparkStream-for-meetup](https://github.com/gautham20/SparkStream-for-meetup)
-
 ```shell
 $ curl -s -L http://stream.meetup.com/2/rsvps | jsonpp
 {
