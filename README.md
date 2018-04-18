@@ -1,5 +1,10 @@
 # Meetup Streaming Analysis
 
+## Introduction
+
+* Who should I be networking when attending a specific meetup?
+* What are trending meetups in each country or state?
+
 ## API & Libraries
 
 * meetup api
@@ -7,7 +12,7 @@
   * data render in [browser](http://meetup.github.io/stream/rsvpTicker/)
 
 ```shell
-$ curl -s -L http://stream.meetup.com/2/rsvps | jsonpp
+$ unbuffer curl -s -L http://stream.meetup.com/2/rsvps | jsonpp
 {
   "venue": {
     "venue_name": "West Des Moines Public Library",
