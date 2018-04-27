@@ -8,7 +8,7 @@ Matching people with similar interest.
 
 ## Use cases
 
-Meetup events that intrigues me are about Java, Spark and Cooking. Not only do I interested in learning about the topics, but also meeting with people sharing same interest. In this project, I am creating people recommendation system.
+People would attends meetup events that intrigues them. Take myself as example, I would attend meetup events that are related to Java, Spark and **Cooking**. Not only am I interested in learning about the topics that being shared at those events, but also meeting with people sharing same interest and discuss with them. In this project, I am creating people recommendation.
 
 ## Architecture
 
