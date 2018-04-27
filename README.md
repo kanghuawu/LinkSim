@@ -1,16 +1,28 @@
 # Meetup Streaming Analysis
 
-## Introduction
+[demo](http://ec2-54-212-227-133.us-west-2.compute.amazonaws.com:8077/)
 
-People attend meeups not just listening to topic but also networking.
+## Project Idea
 
-## Use case
+Match people with similar interest.
 
-* Who should I be networking when attending a specific meetup?
-* What are trending meetups in each country or state?
-* If I am a open source developer, which meetup should I promote my project?
+## Use cases
 
-## Dataset
+* Find out the people who share my interest (ex: Java, Spark, Cooking)
+
+## Architecture
+
+![](architecture.png)
+
+## Technologies
+
+* Kafka
+* Spark Streaming
+* Spark
+* Cassandra
+* Spring/React/D3
+
+## Dataset/Data source
 
 * Meetup API
-* CommonCrawler
+* Common Crawler
