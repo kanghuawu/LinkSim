@@ -4,11 +4,11 @@
 
 ## Project Idea
 
-Match people with similar interest.
+Matching people with similar interest.
 
 ## Use cases
 
-* Find out the people who share my interest (ex: Java, Spark, Cooking)
+Meetup events that intrigues me are about Java, Spark and Cooking. Not only do I interested in learning about the topics, but also meeting with people sharing same interest. In this project, I am creating people recommendation system.
 
 ## Architecture
 
@@ -24,5 +24,5 @@ Match people with similar interest.
 
 ## Dataset/Data source
 
-* Meetup API
+* [Meetup API](https://www.meetup.com/meetup_api/) has
 * Common Crawler
