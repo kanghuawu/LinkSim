@@ -1,76 +1,28 @@
 # Meetup Streaming Analysis
 
-## API & Libraries
+[demo](http://ec2-54-212-227-133.us-west-2.compute.amazonaws.com:8077/)
 
-* meetup api
-  * [raw data](http://stream.meetup.com/2/rsvps) can be curl as show below
-  * data render in [browser](http://meetup.github.io/stream/rsvpTicker/)
+## Project Idea
 
-* [SparkStream-for-meetup](https://github.com/gautham20/SparkStream-for-meetup)
+Matching people with similar interest.
 
-```shell
-$ curl -s -L http://stream.meetup.com/2/rsvps | jsonpp
-{
-  "venue": {
-    "venue_name": "West Des Moines Public Library",
-    "lon": -93.759647,
-    "lat": 41.564202,
-    "venue_id": 746276
-  },
-  "visibility": "public",
-  "response": "yes",
-  "guests": 0,
-  "member": {
-    "member_id": 180958822,
-    "member_name": "Michelle"
-  },
-  "rsvp_id": 1723590801,
-  "mtime": 1523932806644,
-  "event": {
-    "event_name": "Critical Bible Study with Randy Henderson",
-    "event_id": "249388268",
-    "time": 1524697200000,
-    "event_url": "https:\/\/www.meetup.com\/Iowa-Atheists-and-Freethinkers\/events\/249388268\/"
-  },
-  "group": {
-    "group_topics": [
-      {
-        "urlkey": "atheist-outreach",
-        "topic_name": "Atheist Outreach"
-      },
-      {
-        "urlkey": "discussing-atheism-skepticism-and-secularism",
-        "topic_name": "Discussing atheism skepticism and secularism"
-      },
-      {
-        "urlkey": "secularism",
-        "topic_name": "Secularism"
-      },
-      {
-        "urlkey": "atheists",
-        "topic_name": "Atheist"
-      },
-      {
-        "urlkey": "agnostic",
-        "topic_name": "Agnostic"
-      },
-      {
-        "urlkey": "humanism",
-        "topic_name": "Humanism"
-      },
-      {
-        "urlkey": "churchandstate",
-        "topic_name": "Separation of Church and State"
-      }
-    ],
-    "group_city": "Des Moines",
-    "group_country": "us",
-    "group_id": 1066657,
-    "group_name": "Iowa Atheists and Freethinkers",
-    "group_lon": -93.63,
-    "group_urlname": "Iowa-Atheists-and-Freethinkers",
-    "group_state": "IA",
-    "group_lat": 41.6
-  }
-}
-```
+## Use cases
+
+People would attends meetup events that intrigues them. Take myself as example, I would attend meetup events that are related to Java, Spark and **Cooking**. Not only am I interested in learning about the topics that being shared at those events, but also meeting with people sharing same interest and discuss with them. In this project, I am creating people recommendation.
+
+## Architecture
+
+![](architecture.png)
+
+## Technologies
+
+* Kafka
+* Spark Streaming
+* Spark
+* Cassandra
+* Spring/React/D3
+
+## Dataset/Data source
+
+* [Meetup API](https://www.meetup.com/meetup_api/) has
+* Common Crawler
