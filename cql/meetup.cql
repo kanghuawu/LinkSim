@@ -1,7 +1,7 @@
-CREATE KEYSPACE IF NOT EXISTS meetup_analysis 
-WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 3};
+CREATE KEYSPACE IF NOT EXISTS meetup 
+WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
 
-CREATE TABLE IF NOT EXISTS meetup_analysis.world_stat_by_date (
+CREATE TABLE IF NOT EXISTS meetup.world_stat_by_date (
 mdate date,
 group_country text,
 group_city text,
@@ -19,7 +19,7 @@ PRIMARY KEY ((mdate), group_country, total, event_id))
 WITH CLUSTERING ORDER BY (group_country ASC, total DESC);
 
 
-CREATE TABLE IF NOT EXISTS meetup_analysis.us_stat_by_date (
+CREATE TABLE IF NOT EXISTS meetup.us_stat_by_date (
 mdate date,
 group_state text,
 total int,
@@ -36,11 +36,10 @@ topics set<text>,
 PRIMARY KEY ((mdate), group_state, total, event_id))
 WITH CLUSTERING ORDER BY (group_state ASC, total DESC);
 
-CREATE TABLE IF NOT EXISTS meetup_analysis.similar_people (
-idA int,
-nameA text,
-idB int,
-nameB text,
+CREATE TABLE IF NOT EXISTS meetup.similar_people (
+name_a text,
+id_a bigint,
+name_b text,
+id_b bigint,
 distance double,
-PRIMARY KEY ((idA), distance, nameB))
-WITH CLUSTERING ORDER BY (distance ASC, nameB DESC);
+PRIMARY KEY ((name_a), id_a, distance, name_b, id_b));

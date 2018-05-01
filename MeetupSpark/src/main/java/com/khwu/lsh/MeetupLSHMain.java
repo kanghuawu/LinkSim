@@ -14,8 +14,11 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.IntegralType;
 import org.apache.spark.sql.types.StructType;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import static com.datastax.spark.connector.japi.CassandraJavaUtil.javaFunctions;
@@ -60,12 +63,20 @@ public class MeetupLSHMain {
                 .json(prop.getProperty(Utility.DATA_SOURCE));
 
         Dataset<Row> subDF = df.select("member.member_id", "member.member_name",
-                "group.group_topics.urlkey").limit(50);
+                "group.group_topics.urlkey");
 
+        long urlKeyNum = df.select("group.group_topics.urlkey")
+                .distinct()
+                .count();
+        if (urlKeyNum >= Integer.MAX_VALUE) {
+            urlKeyNum = Integer.MAX_VALUE;
+        }
+
+        System.out.println(String.format("Url-keys: %d", urlKeyNum));
         CountVectorizerModel cvModel = new CountVectorizer()
                 .setInputCol("urlkey")
                 .setOutputCol("feature")
-                .setVocabSize(10)
+                .setVocabSize((int) urlKeyNum)
                 .setMinDF(2)
                 .fit(subDF);
 
@@ -88,19 +99,27 @@ public class MeetupLSHMain {
 
         JavaRDD<SimilarPeople> rdd = similarPPL
                 .toJavaRDD()
+                .filter(row -> row.getLong(0) != row.getLong(2))
                 .map(row -> {
                     SimilarPeople s = new SimilarPeople();
-                    s.setIda(row.getInt(0));
-                    s.setNamea(row.getString(1));
-                    s.setIdb(row.getInt(2));
-                    s.setNameb(row.getString(3));
+                    s.setIdA(row.getLong(0));
+                    s.setNameA(row.getString(1));
+                    s.setIdB(row.getLong(2));
+                    s.setNameB(row.getString(3));
                     s.setDistance(row.getDouble(4));
                     return s;
                 });
 
+        Map<String, String> fieldToColumnMapping = new HashMap<>();
+        fieldToColumnMapping.put("nameA", "name_a");
+        fieldToColumnMapping.put("idA", "id_a");
+        fieldToColumnMapping.put("nameB", "name_b");
+        fieldToColumnMapping.put("idB", "id_b");
+        fieldToColumnMapping.put("distance", "distance");
+
         CassandraJavaUtil.javaFunctions(rdd)
-                .writerBuilder(CASSANDRA_KEYSPACE, SIMILAR_PEOPLE_TABLE, CassandraJavaUtil.mapToRow(SimilarPeople.class))
-                .withColumnSelector(someColumns("ida", "namea", "idb", "nameb", "distance"))
+                .writerBuilder(CASSANDRA_KEYSPACE, SIMILAR_PEOPLE_TABLE, CassandraJavaUtil.mapToRow(SimilarPeople.class, fieldToColumnMapping))
+//                .withColumnSelector(someColumns("id_a", "name_a", "id_b", "name_b", "distance"))
                 .saveToCassandra();
 
         spark.stop();
