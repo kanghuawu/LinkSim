@@ -45,7 +45,10 @@ public class MeetupLSHMain {
             master = "local[*]";
         }
 
-        if (prop == null) return;
+        if (prop == null) {
+            System.out.println("Props missing...");
+            return;
+        }
 
         SparkConf conf = new SparkConf()
                 .setMaster(master)
@@ -60,9 +63,11 @@ public class MeetupLSHMain {
 
         StructType schema = Utility.setUpSchema();
 
+        String[] files = prop.getProperty(Utility.DATA_SOURCE).split(",");
+
         Dataset<Row> df = spark.read()
                 .schema(schema)
-                .json(prop.getProperty(Utility.DATA_SOURCE));
+                .json(files);
 
         Dataset<Row> subDF = df.select("member.member_id", "member.member_name",
                 "group.group_topics.urlkey")
@@ -104,6 +109,8 @@ public class MeetupLSHMain {
 
         MinHashLSHModel model = mh.fit(vectorizedDF);
 
+        model.transform(vectorizedDF).show(false);
+
         Dataset<Row> similarPPL = model
                 .approxSimilarityJoin(vectorizedDF, vectorizedDF, THRESHOLD, "distance")
                 .select(col("datasetA.member_id").alias("ida"),
@@ -113,7 +120,7 @@ public class MeetupLSHMain {
                         col("distance"));
 
         JavaRDD<SimilarPeople> rdd = similarPPL
-                .toJavaRDD()
+                .javaRDD()
                 .filter(row -> row.getLong(0) != row.getLong(2))
                 .map(row -> {
                     SimilarPeople s = new SimilarPeople();
@@ -134,7 +141,6 @@ public class MeetupLSHMain {
 
         CassandraJavaUtil.javaFunctions(rdd)
                 .writerBuilder(CASSANDRA_KEYSPACE, SIMILAR_PEOPLE_TABLE, CassandraJavaUtil.mapToRow(SimilarPeople.class, fieldToColumnMapping))
-//                .withColumnSelector(someColumns("id_a", "name_a", "id_b", "name_b", "distance"))
                 .saveToCassandra();
 
         spark.stop();

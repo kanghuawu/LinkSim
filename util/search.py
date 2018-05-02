@@ -1,13 +1,24 @@
 import json
 import sys
+from os import listdir
+from os.path import isfile, join
 
-def search():
-    with open('./data/2018-03-29_061608.json', 'r') as f:
-        for line in f:
-            dic = json.loads(line)
-            if dic['event'] and dic['event']['event_id'] == '248239522':
-                print(dic['member']['member_id'], dic['member']['member_name'])
+def searchByMemberName(input_dir, value):
+    input_files = [join(input_dir, f) for f in listdir(input_dir) if isfile(join(input_dir, f))]
+    # print(input_files)
+    for file in input_files:
+        with open(file, 'r') as f:
+            for line in f:
+                try:
+                    dic = json.loads(line)
+                    if dic['event'] and dic['member']['member_name'] == value:
+                        print(file, dic['event']['event_name'], dic['member']['member_name'])
+                except Exception as e:
+                    # print('Decoding JSON has failed')
+                    pass
+                
 
 if __name__ == '__main__':
-    
-    search()
+    if len(sys.argv) != 3:
+        raise Exception('incorrect args')
+    searchByMemberName(sys.argv[1], sys.argv[2])
