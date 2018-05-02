@@ -30,11 +30,13 @@ import static org.apache.spark.sql.functions.col;
 public class MeetupLSHMain {
     private static final double THRESHOLD = 0.3;
     private static final String SIMILAR_PEOPLE_TABLE = "similar_people";
+    private static final int HASH_TABLES = 3;
 
     public static void main(String[] args) {
         Utility.setUpLogging();
         Properties prop;
         String master;
+
         if (args.length > 0) {
             prop = Utility.setUpConfig(args[0]);
             master = args[1];
@@ -63,16 +65,25 @@ public class MeetupLSHMain {
                 .json(prop.getProperty(Utility.DATA_SOURCE));
 
         Dataset<Row> subDF = df.select("member.member_id", "member.member_name",
-                "group.group_topics.urlkey");
+                "group.group_topics.urlkey")
+                .cache();
 
-        long urlKeyNum = df.select("group.group_topics.urlkey")
+        long urlKeyNum = subDF.select("urlkey")
                 .distinct()
                 .count();
+
         if (urlKeyNum >= Integer.MAX_VALUE) {
             urlKeyNum = Integer.MAX_VALUE;
         }
 
         System.out.println(String.format("Url-keys: %d", urlKeyNum));
+
+        long memberNum = subDF.select("member_id")
+                .distinct()
+                .count();
+
+        System.out.println(String.format("Members: %d", memberNum));
+
         CountVectorizerModel cvModel = new CountVectorizer()
                 .setInputCol("urlkey")
                 .setOutputCol("feature")
@@ -86,11 +97,15 @@ public class MeetupLSHMain {
                 .filter(callUDF("isNoneZeroVector", col("feature")))
                 .select(col("member_id"), col("member_name"),  col("feature"));
 
-        MinHashLSH mh = new MinHashLSH().setNumHashTables(3).setInputCol("feature").setOutputCol("hashValues");
+        MinHashLSH mh = new MinHashLSH()
+                .setNumHashTables(HASH_TABLES)
+                .setInputCol("feature")
+                .setOutputCol("hashValues");
 
         MinHashLSHModel model = mh.fit(vectorizedDF);
 
-        Dataset<Row> similarPPL = model.approxSimilarityJoin(vectorizedDF, vectorizedDF, THRESHOLD, "distance")
+        Dataset<Row> similarPPL = model
+                .approxSimilarityJoin(vectorizedDF, vectorizedDF, THRESHOLD, "distance")
                 .select(col("datasetA.member_id").alias("ida"),
                         col("datasetA.member_name").alias("namea"),
                         col("datasetB.member_id").alias("idb"),
