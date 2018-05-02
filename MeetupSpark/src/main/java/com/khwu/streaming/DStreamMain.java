@@ -9,11 +9,13 @@ import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaPairInputDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.apache.spark.streaming.kafka.KafkaUtils;
+import scala.Tuple2;
 
 import java.util.*;
 
 import static com.khwu.util.Utility.KAFKA_SERVERS;
 import static com.khwu.util.Utility.KAFKA_TOPIC_MEETUP;
+import static com.khwu.util.Utility.ZOOKEEPER_SERVERS;
 
 public class DStreamMain {
     public static void main(String[] args) throws InterruptedException {
@@ -27,7 +29,10 @@ public class DStreamMain {
             prop = Utility.setUpConfig(Utility.DEBUG_MODE);
             master = "local[*]";
         }
-        if (prop == null) return;
+        if (prop == null) {
+            System.out.println("Props missing...");
+            return;
+        }
 
         SparkConf conf = new SparkConf()
                 .setMaster(master)
@@ -37,6 +42,7 @@ public class DStreamMain {
 
         Map<String, String> param = new HashMap<>();
         param.put("bootstrap.servers", prop.getProperty(KAFKA_SERVERS));
+        param.put("zookeeper.connect", prop.getProperty(ZOOKEEPER_SERVERS));
 
         Set<String> topics = new HashSet<>(Arrays.asList(KAFKA_TOPIC_MEETUP));
 
@@ -47,6 +53,8 @@ public class DStreamMain {
                 StringDecoder.class,
                 param,
                 topics);
+
+        kafkaStream.map(tup -> new Tuple2<>(tup._1, tup._2)).print();
 
         kafkaStream.map(tup -> {
             ObjectMapper mapper = new ObjectMapper();

@@ -93,6 +93,7 @@ public class Utility {
     public final static String CASSANDRA_PORT = "CASSANDRA_PORT";
     public final static String DATA_SOURCE = "DATA_SOURCE";
     public final static String KAFKA_SERVERS = "KAFKA_SERVERS";
+    public final static String ZOOKEEPER_SERVERS = "ZOOKEEPER_SERVERS";
 
     public static Properties setUpConfig(String mode) {
         Properties prop = new Properties();
@@ -102,7 +103,8 @@ public class Utility {
                 CASSANDRA_HOST,
                 CASSANDRA_PORT,
                 DATA_SOURCE,
-                KAFKA_SERVERS));
+                KAFKA_SERVERS,
+                ZOOKEEPER_SERVERS));
 
         try (InputStream input = new FileInputStream(file)) {
             prop.load(input);
