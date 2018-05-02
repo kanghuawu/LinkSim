@@ -109,7 +109,7 @@ public class MeetupLSHMain {
 
         MinHashLSHModel model = mh.fit(vectorizedDF);
 
-        model.transform(vectorizedDF).show(false);
+//        model.transform(vectorizedDF).show(false);
 
         Dataset<Row> similarPPL = model
                 .approxSimilarityJoin(vectorizedDF, vectorizedDF, THRESHOLD, "distance")
