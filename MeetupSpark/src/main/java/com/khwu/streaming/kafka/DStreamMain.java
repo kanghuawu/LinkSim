@@ -1,7 +1,7 @@
-package com.khwu.streaming;
+package com.khwu.streaming.kafka;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.khwu.model.json.Reservation;
+import com.khwu.model.kafka.rsvp.Reservation;
 import com.khwu.util.Utility;
 import kafka.serializer.StringDecoder;
 import org.apache.spark.SparkConf;

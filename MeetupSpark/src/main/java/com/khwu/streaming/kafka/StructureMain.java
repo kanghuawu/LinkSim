@@ -1,4 +1,4 @@
-package com.khwu.streaming;
+package com.khwu.streaming.kafka;
 
 import com.khwu.model.sql.Schema;
 import com.khwu.util.Utility;

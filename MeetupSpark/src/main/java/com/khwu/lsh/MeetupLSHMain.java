@@ -1,7 +1,7 @@
 package com.khwu.lsh;
 
 import com.datastax.spark.connector.japi.CassandraJavaUtil;
-import com.khwu.cassandra.SimilarPeople;
+import com.khwu.model.cassandra.SimilarPeople;
 import com.khwu.model.sql.Schema;
 import com.khwu.util.Utility;
 import org.apache.spark.SparkConf;
@@ -69,8 +69,7 @@ public class MeetupLSHMain {
                 .schema(schema)
                 .json(files);
 
-        Dataset<Row> subDF = df.select("member.member_id", "member.member_name",
-                "group.group_topics.urlkey")
+        Dataset<Row> subDF = df.select("member.member_id","group.group_topics.urlkey")
                 .cache();
 
         long urlKeyNum = subDF.select("urlkey")
@@ -100,7 +99,7 @@ public class MeetupLSHMain {
 
         Dataset<Row> vectorizedDF = cvModel.transform(subDF)
                 .filter(callUDF("isNoneZeroVector", col("feature")))
-                .select(col("member_id"), col("member_name"),  col("feature"));
+                .select(col("member_id"),  col("feature"));
 
         MinHashLSH mh = new MinHashLSH()
                 .setNumHashTables(HASH_TABLES)
@@ -115,9 +114,7 @@ public class MeetupLSHMain {
         Dataset<Row> similarPPL = model
                 .approxSimilarityJoin(vectorizedDF, vectorizedDF, THRESHOLD, "distance")
                 .select(col("datasetA.member_id").alias("ida"),
-                        col("datasetA.member_name").alias("namea"),
                         col("datasetB.member_id").alias("idb"),
-                        col("datasetB.member_name").alias("nameb"),
                         col("distance"));
 
         JavaRDD<SimilarPeople> rdd = similarPPL
@@ -134,9 +131,7 @@ public class MeetupLSHMain {
                 });
 
         Map<String, String> fieldToColumnMapping = new HashMap<>();
-        fieldToColumnMapping.put("nameA", "name_a");
         fieldToColumnMapping.put("idA", "id_a");
-        fieldToColumnMapping.put("nameB", "name_b");
         fieldToColumnMapping.put("idB", "id_b");
         fieldToColumnMapping.put("distance", "distance");
 

@@ -1,4 +1,4 @@
-package com.khwu.model.json;
+package com.khwu.model.kafka.rsvp;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
