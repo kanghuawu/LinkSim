@@ -2,6 +2,7 @@ package com.khwu.lsh;
 
 import com.datastax.spark.connector.japi.CassandraJavaUtil;
 import com.khwu.cassandra.SimilarPeople;
+import com.khwu.model.sql.Schema;
 import com.khwu.util.Utility;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
@@ -14,7 +15,6 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.IntegralType;
 import org.apache.spark.sql.types.StructType;
 
 import java.util.HashMap;
@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import static com.datastax.spark.connector.japi.CassandraJavaUtil.javaFunctions;
-import static com.datastax.spark.connector.japi.CassandraJavaUtil.someColumns;
 import static com.khwu.util.Utility.*;
 import static org.apache.spark.sql.functions.callUDF;
 import static org.apache.spark.sql.functions.col;
@@ -37,6 +36,7 @@ public class MeetupLSHMain {
         Properties prop;
         String master;
 
+        //noinspection Duplicates
         if (args.length > 0) {
             prop = Utility.setUpConfig(args[0]);
             master = args[1];
@@ -61,7 +61,7 @@ public class MeetupLSHMain {
                 .config(conf)
                 .getOrCreate();
 
-        StructType schema = Utility.setUpSchema();
+        StructType schema = Schema.schema();
 
         String[] files = prop.getProperty(Utility.DATA_SOURCE).split(",");
 
@@ -109,7 +109,8 @@ public class MeetupLSHMain {
 
         MinHashLSHModel model = mh.fit(vectorizedDF);
 
-//        model.transform(vectorizedDF).show(false);
+        model.transform(vectorizedDF)
+                .show();
 
         Dataset<Row> similarPPL = model
                 .approxSimilarityJoin(vectorizedDF, vectorizedDF, THRESHOLD, "distance")
@@ -141,6 +142,7 @@ public class MeetupLSHMain {
 
         CassandraJavaUtil.javaFunctions(rdd)
                 .writerBuilder(CASSANDRA_KEYSPACE, SIMILAR_PEOPLE_TABLE, CassandraJavaUtil.mapToRow(SimilarPeople.class, fieldToColumnMapping))
+                .withConstantTTL(30)
                 .saveToCassandra();
 
         spark.stop();

@@ -1,5 +1,6 @@
 package com.khwu.streaming;
 
+import com.khwu.model.sql.Schema;
 import com.khwu.util.Utility;
 import org.apache.spark.SparkConf;
 import org.apache.spark.sql.Dataset;
@@ -22,6 +23,8 @@ public class StructureMain {
         Utility.setUpLogging();
         Properties prop;
         String master;
+
+        //noinspection Duplicates
         if (args.length > 0) {
             prop = Utility.setUpConfig(args[0]);
             master = args[1];
@@ -39,7 +42,7 @@ public class StructureMain {
                 .config(conf)
                 .getOrCreate();
 
-        StructType schema = Utility.setUpSchema();
+        StructType schema = Schema.schema();
 
         Dataset<Row> df = spark.readStream()
                 .format("kafka")

@@ -1,7 +1,7 @@
 package com.khwu.streaming;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.khwu.model.Reservation;
+import com.khwu.model.json.Reservation;
 import com.khwu.util.Utility;
 import kafka.serializer.StringDecoder;
 import org.apache.spark.SparkConf;
@@ -22,6 +22,8 @@ public class DStreamMain {
         Utility.setUpLogging();
         Properties prop;
         String master;
+
+        //noinspection Duplicates
         if (args.length > 0) {
             prop = Utility.setUpConfig(args[0]);
             master = args[1];

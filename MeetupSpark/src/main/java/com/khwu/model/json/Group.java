@@ -1,4 +1,4 @@
-package com.khwu.model;
+package com.khwu.model.json;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
