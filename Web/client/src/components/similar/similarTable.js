@@ -13,14 +13,20 @@ class SimilarTable extends Component {
         this.props.fetchSimilarPeople();
     }
 
+    renderTags(tags) {
+        return <div>{tags.map(tag => {
+            return <button className="btn btn-xs btn-default">{tag}</button>
+        })}</div>
+    }
+
     renderData() {
         return this.props.data.map(data => {
             return (
-                <tr key={data.ida + data.idb}>
-                    <th>{data.ida}</th>
-                    <th>{data.namea}</th>
-                    <th>{data.idb}</th>
-                    <th>{data.nameb}</th>
+                <tr key={data.idA + data.idB}>
+                    <th><div style={{"width": "100px"}}>{data.nameA}</div></th>
+                    <th><div style={{"width": "200px", "fontSize": "xx-small"}}>{this.renderTags(data.urlkeyA)}</div></th>
+                    <th><div style={{"width": "100px"}}>{data.nameB}</div></th>
+                    <th><div style={{"width": "200px", "fontSize": "xx-small"}}>{this.renderTags(data.urlkeyB)}</div></th>
                     <th>{data.distance}</th>
                 </tr>
             );
@@ -31,13 +37,13 @@ class SimilarTable extends Component {
         if (!this.props.data) return <div/>;
         return (
             <div className="table-responsive-md">
-                <table className="table table-hover">
+                <table style={{"width": "1000px"}} className="table table-hover">
                     <thead>
                     <tr>
-                        <th>ID A</th>
                         <th>Name A</th>
-                        <th>ID B</th>
+                        <th>Tags</th>
                         <th>Name B</th>
+                        <th>Tags </th>
                         <th>Distance</th>
                     </tr>
                     </thead>

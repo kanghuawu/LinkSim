@@ -9,6 +9,8 @@ import java.util.List;
 
 @Repository
 public interface SimilarPeopleRepository extends CrudRepository<SimilarPeople, Integer> {
-    @Query("SELECT * FROM similar_people LIMIT 20")
+    @Query("SELECT * FROM similar_people LIMIT 30")
     List<SimilarPeople> findAll();
+    @Query("SELECT * FROM similar_people WHERE id_a = $id")
+    SimilarPeople findById(Long id);
 }

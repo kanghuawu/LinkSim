@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// const ROOT_URL = 'http://localhost:8080';
-const ROOT_URL = '';
+const ROOT_URL = 'http://localhost:8077';
+// const ROOT_URL = '';
 
 export const AUTH_USER = 'auth_user';
 export const UNAUTH_USER = 'unauth_user';

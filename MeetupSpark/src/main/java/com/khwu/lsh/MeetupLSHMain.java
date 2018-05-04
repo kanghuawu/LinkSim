@@ -69,7 +69,7 @@ public class MeetupLSHMain {
                 .schema(schema)
                 .json(files);
 
-        Dataset<Row> subDF = df.select("member.member_id","group.group_topics.urlkey")
+        Dataset<Row> subDF = df.select("member.member_id", "member.member_name", "group.group_topics.urlkey")
                 .cache();
 
         long urlKeyNum = subDF.select("urlkey")
@@ -99,7 +99,7 @@ public class MeetupLSHMain {
 
         Dataset<Row> vectorizedDF = cvModel.transform(subDF)
                 .filter(callUDF("isNoneZeroVector", col("feature")))
-                .select(col("member_id"),  col("feature"));
+                .select(col("member_id"),  col("member_name"), col("urlkey"), col("feature"));
 
         MinHashLSH mh = new MinHashLSH()
                 .setNumHashTables(HASH_TABLES)
@@ -114,28 +114,42 @@ public class MeetupLSHMain {
         Dataset<Row> similarPPL = model
                 .approxSimilarityJoin(vectorizedDF, vectorizedDF, THRESHOLD, "distance")
                 .select(col("datasetA.member_id").alias("ida"),
+                        col("datasetA.member_name").alias("name_a"),
+                        col("datasetA.urlkey").alias("urlkey_a"),
                         col("datasetB.member_id").alias("idb"),
+                        col("datasetB.member_name").alias("name_b"),
+                        col("datasetB.urlkey").alias("urlkey_b"),
                         col("distance"));
+
+        similarPPL.show();
 
         JavaRDD<SimilarPeople> rdd = similarPPL
                 .javaRDD()
-                .filter(row -> row.getLong(0) != row.getLong(2))
+                .filter(row -> row.getLong(0) != row.getLong(3))
                 .map(row -> {
                     SimilarPeople s = new SimilarPeople();
                     s.setIdA(row.getLong(0));
-                    s.setIdB(row.getLong(1));
-                    s.setDistance(row.getDouble(2));
+                    s.setNameA(row.getString(1));
+                    s.setUrlkeyA(row.getList(2));
+                    s.setIdB(row.getLong(3));
+                    s.setNameB(row.getString(4));
+                    s.setUrlkeyB(row.getList(5));
+                    s.setDistance(row.getDouble(6));
                     return s;
                 });
 
         Map<String, String> fieldToColumnMapping = new HashMap<>();
         fieldToColumnMapping.put("idA", "id_a");
+        fieldToColumnMapping.put("nameA", "name_a");
+        fieldToColumnMapping.put("urlkeyA", "urlkey_a");
         fieldToColumnMapping.put("idB", "id_b");
+        fieldToColumnMapping.put("nameB", "name_b");
+        fieldToColumnMapping.put("urlkeyB", "urlkey_b");
         fieldToColumnMapping.put("distance", "distance");
 
         CassandraJavaUtil.javaFunctions(rdd)
                 .writerBuilder(CASSANDRA_KEYSPACE, SIMILAR_PEOPLE_TABLE, CassandraJavaUtil.mapToRow(SimilarPeople.class, fieldToColumnMapping))
-                .withConstantTTL(30)
+//                .withConstantTTL(30)
                 .saveToCassandra();
 
         spark.stop();
