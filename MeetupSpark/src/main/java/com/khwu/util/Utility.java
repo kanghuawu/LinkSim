@@ -21,6 +21,7 @@ public class Utility {
 
     public static void setUpLogging() {
         Logger.getLogger("org").setLevel(Level.WARN);
+        Logger.getLogger("akka").setLevel(Level.WARN);
     }
 
     private final static String DEBUG_FILE = "../config/debug.txt";

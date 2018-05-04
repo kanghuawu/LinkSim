@@ -123,10 +123,8 @@ public class MeetupLSHMain {
                 .map(row -> {
                     SimilarPeople s = new SimilarPeople();
                     s.setIdA(row.getLong(0));
-                    s.setNameA(row.getString(1));
-                    s.setIdB(row.getLong(2));
-                    s.setNameB(row.getString(3));
-                    s.setDistance(row.getDouble(4));
+                    s.setIdB(row.getLong(1));
+                    s.setDistance(row.getDouble(2));
                     return s;
                 });
 

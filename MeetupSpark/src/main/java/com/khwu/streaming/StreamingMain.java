@@ -4,10 +4,12 @@ import com.khwu.util.Utility;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
+import com.vividsolutions.jts.geom.Polygon;
 import kafka.serializer.StringDecoder;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.serializer.KryoSerializer;
 import org.apache.spark.storage.StorageLevel;
 import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaPairInputDStream;
@@ -16,6 +18,7 @@ import org.apache.spark.streaming.kafka.KafkaUtils;
 import org.datasyslab.geospark.enums.FileDataSplitter;
 import org.datasyslab.geospark.enums.GridType;
 import org.datasyslab.geospark.enums.IndexType;
+import org.datasyslab.geospark.serde.GeoSparkKryoRegistrator;
 import org.datasyslab.geospark.spatialOperator.JoinQuery;
 import org.datasyslab.geospark.spatialRDD.PointRDD;
 import org.datasyslab.geospark.spatialRDD.PolygonRDD;
@@ -46,6 +49,8 @@ public class StreamingMain {
         }
 
         SparkConf conf = new SparkConf()
+                .set("spark.serializer", KryoSerializer.class.getName())
+                .set("spark.kryo.registrator", GeoSparkKryoRegistrator.class.getName())
                 .setMaster(master)
                 .setAppName("stream-app");
 
@@ -72,7 +77,7 @@ public class StreamingMain {
                 param,
                 topics);
 
-        kafkaStream.mapToPair(tup -> new Tuple2<>(tup._1, tup._2)).print();
+//        kafkaStream.mapToPair(tup -> new Tuple2<>(tup._1, tup._2)).print();
 
         kafkaStream.map(tup -> tup._2)
                 .foreachRDD(rdd -> {
@@ -81,16 +86,26 @@ public class StreamingMain {
                         return geoFactory.createPoint(new Coordinate(Double.parseDouble(arr[1]), Double.parseDouble(arr[2])));
                     });
 
+
                     if (!rdd.isEmpty()) {
                         PointRDD pointRDD = new PointRDD(point);
-                        pointRDD.spatialPartitioning(GridType.QUADTREE);
-                        polygonRDD.spatialPartitioning(pointRDD.partitionTree);
 
-                        pointRDD.buildIndex(IndexType.RTREE, true);
+                        pointRDD.analyze();
+                        polygonRDD.analyze();
+
+                        pointRDD.spatialPartitioning(GridType.QUADTREE);
+                        polygonRDD.spatialPartitioning(pointRDD.getPartitioner());
+
+//                        polygonRDD.buildIndex(IndexType.QUADTREE, true);
+
+                        pointRDD.spatialPartitionedRDD.persist(StorageLevel.MEMORY_ONLY());
                         polygonRDD.spatialPartitionedRDD.persist(StorageLevel.MEMORY_ONLY());
 
-                        long result = JoinQuery.SpatialJoinQuery(pointRDD, polygonRDD, true, false).count();
-                        System.out.println(result);
+                        System.out.println(JoinQuery.SpatialJoinQuery(pointRDD, polygonRDD, false, false)
+                                .map(tup -> tup._1.getUserData().toString())
+                                .collect());
+//                        System.out.println(result);
+                        System.out.println(rdd.count());
                     }
                 });
 

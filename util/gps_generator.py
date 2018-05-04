@@ -6,7 +6,8 @@ from datetime import datetime
 import time
 
 def gps_generator(input_dir, output_file):
-    input_files = [f for f in listdir(input_dir) if isfile(join(input_dir, f))]
+    input_files = [join(input_dir, f) for f in listdir(input_dir) if isfile(join(input_dir, f)) and f.endswith('json')]
+    print(input_files)
     with open(output_file, 'w') as output_f:
         output = output_f
         for file in input_files:
@@ -14,13 +15,13 @@ def gps_generator(input_dir, output_file):
                 for line in input_f:
                     try:
                         dic = json.loads(line)
-                        if dic.get('member') and dic.get('venue'):
+                        if dic.get('member') and dic.get('venue') and dic.get('group').get('group_country').lower() == 'us':
                             output.write('{},{},{}\n'.format(
                                 int(dic['member']['member_id']), 
                                 float(dic['venue']['lon']), 
                                 float(dic['venue']['lat'])))
                     except Exception as e:
-                        print('Decoding JSON has failed')
+                        # print('Decoding JSON has failed')
                         pass
                     
 
