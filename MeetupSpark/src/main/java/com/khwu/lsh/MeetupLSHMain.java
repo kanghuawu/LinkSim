@@ -29,7 +29,7 @@ import static org.apache.spark.sql.functions.col;
 public class MeetupLSHMain {
     private static final double THRESHOLD = 0.3;
     private static final String SIMILAR_PEOPLE_TABLE = "similar_people";
-    private static final int HASH_TABLES = 3;
+    private static final int HASH_TABLES = 5;
 
     public static void main(String[] args) {
         Utility.setUpLogging();
