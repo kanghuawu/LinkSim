@@ -69,8 +69,7 @@ public class MeetupLSHMain {
                 .schema(schema)
                 .json(files);
 
-        Dataset<Row> subDF = df.select("member.member_id", "member.member_name", "group.group_topics.urlkey")
-                .cache();
+        Dataset<Row> subDF = df.select("member.member_id", "member.member_name", "group.group_topics.urlkey");
 
         long urlKeyNum = subDF.select("urlkey")
                 .distinct()

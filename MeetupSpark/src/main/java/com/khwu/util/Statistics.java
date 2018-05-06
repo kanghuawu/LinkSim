@@ -43,8 +43,7 @@ public class Statistics {
 
         Dataset<Row> df = spark.read()
                 .schema(schema)
-                .json(files)
-                .cache();
+                .json(files);
 
         System.out.printf("Total Users: %d%n", df.select("member.member_id").distinct().count());
         System.out.printf("Total Groups: %d%n", df.select("group.group_id").distinct().count());
