@@ -19,7 +19,7 @@ public class SimilarPeopleController {
         return new ResponseEntity<>(similarPeopleService.findAll(), HttpStatus.OK);
     }
 
-    @GetMapping("/{id1}")
+    @GetMapping("/{id}")
     public ResponseEntity<SimilarPeople> getById(@PathVariable("id") Long id) {
         return new ResponseEntity<>(similarPeopleService.findById(id), HttpStatus.OK);
     }

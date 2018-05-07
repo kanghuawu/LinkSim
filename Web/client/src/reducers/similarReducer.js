@@ -7,6 +7,6 @@ export default (state = {}, action) => {
         case SIMILAR_PEOPLE:
             return {...state, data: action.payload};
         default:
-            return {...state, error: ''};
+            return {...state, data: []};
     }
 };
