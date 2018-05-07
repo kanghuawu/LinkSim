@@ -5,8 +5,8 @@ import SimpleMap from './map';
 export default class App extends Component {
     render() {
         return (
-            <div>
-                <div className="row" style={{padding: '30px'}}>
+            <div style={{padding: '30px'}}>
+                <div className="row" >
                     <div className="card" style={{width: '100%'}}>
                         <div className="card-body">
                             <h3>How to use:</h3>
@@ -19,8 +19,9 @@ export default class App extends Component {
                         </div>
                     </div>
                 </div>
-                <div className="row" style={{height: '800px'}}>
-                    <SimilarTable/>
+                <SimilarTable/>
+                <div className="row" >
+
                 </div>
             </div>
 

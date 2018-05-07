@@ -7,6 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @CrossOrigin
 @RequestMapping("similar")
@@ -19,8 +21,8 @@ public class SimilarPeopleController {
         return new ResponseEntity<>(similarPeopleService.findAll(), HttpStatus.OK);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<SimilarPeople> getById(@PathVariable("id") Long id) {
+    @GetMapping("/{id}/{lat}/{lng}")
+    public ResponseEntity<List<SimilarPeople>> getById(@PathVariable("id") Long id, @PathVariable("lat") Float lat, @PathVariable("lng") Float lng) {
         return new ResponseEntity<>(similarPeopleService.findById(id), HttpStatus.OK);
     }
 }

@@ -16,7 +16,7 @@ public class SimilarPeopleService {
         return similarPeopleRepository.findAll();
     }
 
-    public SimilarPeople findById(Long id) {
+    public List<SimilarPeople> findById(Long id) {
         return similarPeopleRepository.findById(id);
     }
 }

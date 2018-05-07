@@ -1,10 +1,10 @@
 import {
-    SIMILAR_PEOPLE
+    USER_ID_BY_NAME
 } from '../actions';
 
 export default (state = {}, action) => {
     switch (action.type) {
-        case SIMILAR_PEOPLE:
+        case USER_ID_BY_NAME:
             return {...state, data: action.payload};
         default:
             return {...state};

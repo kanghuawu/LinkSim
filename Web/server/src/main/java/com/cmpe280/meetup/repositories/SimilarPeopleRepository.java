@@ -13,5 +13,5 @@ public interface SimilarPeopleRepository extends CrudRepository<SimilarPeople, I
     @Query("SELECT * FROM similar_people LIMIT 30")
     List<SimilarPeople> findAll();
     @Query("SELECT * FROM similar_people WHERE id_a = :id")
-    SimilarPeople findById(@Param("id")Long id);
+    List<SimilarPeople> findById(@Param("id")Long id);
 }

@@ -1,29 +1,9 @@
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
-import {Field, reduxForm} from 'redux-form';
 import SimpleMap from './map';
+import InputForm from './inputForm';
 import {fetchSimilarPeople} from '../actions/index';
 
-const renderField = field => {
-    const {meta: {touched, error}} = field;
-    const className = `form-group ${touched && error ? 'has-danger' : ''}`;
-    return (
-        <div className={className}>
-            <label>
-                {field.label}
-            </label>
-            <input
-                className="form-control is-valid"
-                type={field.type}
-                placeholder={field.placeholder}
-                {...field.input}
-            />
-            <div className="invalid-feedback">
-                {touched ? error : ''}
-            </div>
-        </div>
-    );
-};
 
 class SimilarTable extends Component {
     constructor(props) {
@@ -31,7 +11,7 @@ class SimilarTable extends Component {
     }
 
     componentDidMount() {
-        this.props.fetchSimilarPeople();
+        // this.props.fetchSimilarPeople();
     }
 
     renderTags(own, tags) {
@@ -43,10 +23,17 @@ class SimilarTable extends Component {
     }
 
     renderData() {
+        if (!this.props.data) {
+            return (
+                <tr>
+                    <th>No data yet...</th>
+                </tr>
+            );
+        }
         return this.props.data.map(data => {
             return (
                 <tr key={data.idA.toString() + data.idB.toString()}>
-                    <th>{data.nameA}</th>
+                    <th>{data.nameB}</th>
                     <th>{this.renderTags(data.urlkeyA, data.urlkeyB)}</th>
                     <th>{data.distance}</th>
                 </tr>
@@ -54,35 +41,14 @@ class SimilarTable extends Component {
         });
     }
 
-    onSubmit(prop) {
-        console.log(prop);
-    }
-
     render() {
-        const {handleSubmit} = this.props;
         return (
-            <div className="row">
+            <div className="row" style={{height: '800px', padding: '20px'}}>
                 <div className="col">
                     <div style={{height: '500px', width: '500px'}}>
                         <SimpleMap/>
                     </div>
-
-                    <div style={{marginBottom: '20px'}}>
-
-                        <form onSubmit={handleSubmit(this.onSubmit.bind(this))}>
-                            <Field
-                                className="form-control"
-                                type="input"
-                                placeholder="Your Name ex: Kang-Hua Wu"
-                                name="name"
-                                component={renderField}/>
-                            <button
-                                className="btn btn-dark"
-                                type="submit">
-                                Search
-                            </button>
-                        </form>
-                    </div>
+                    <InputForm/>
                 </div>
                 <div className="col">
                     <div className="table-responsive">
@@ -91,7 +57,7 @@ class SimilarTable extends Component {
                             <tr>
                                 <th>Name</th>
                                 <th>Tags</th>
-                                <th>Distance</th>
+                                <th>Jaccard Distance</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -111,4 +77,4 @@ const mapStatesToProps = state => {
     };
 };
 
-export default connect(mapStatesToProps, {fetchSimilarPeople})(reduxForm({form: 'name'})(SimilarTable));
+export default connect(mapStatesToProps, {fetchSimilarPeople})(SimilarTable);
