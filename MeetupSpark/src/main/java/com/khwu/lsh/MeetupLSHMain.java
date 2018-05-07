@@ -6,10 +6,7 @@ import com.khwu.model.sql.Schema;
 import com.khwu.util.Utility;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.ml.feature.CountVectorizer;
-import org.apache.spark.ml.feature.CountVectorizerModel;
-import org.apache.spark.ml.feature.MinHashLSH;
-import org.apache.spark.ml.feature.MinHashLSHModel;
+import org.apache.spark.ml.feature.*;
 import org.apache.spark.ml.linalg.Vector;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -27,7 +24,7 @@ import static org.apache.spark.sql.functions.callUDF;
 import static org.apache.spark.sql.functions.col;
 
 public class MeetupLSHMain {
-    private static final double THRESHOLD = 0.3;
+    private static final double THRESHOLD = 0.6;
     private static final String SIMILAR_PEOPLE_TABLE = "similar_people";
     private static final int HASH_TABLES = 5;
 
@@ -69,11 +66,13 @@ public class MeetupLSHMain {
                 .schema(schema)
                 .json(files);
 
-        Dataset<Row> subDF = df.select("member.member_id", "member.member_name", "group.group_topics.urlkey");
+        Dataset<Row> subDF = df.select("member.member_id",
+                "member.member_name", "group.group_topics.urlkey")
+                .cache();
 
         long urlKeyNum = subDF.select("urlkey")
                 .distinct()
-                .count();
+                .count() + 1;
 
         if (urlKeyNum >= Integer.MAX_VALUE) {
             urlKeyNum = Integer.MAX_VALUE;
@@ -108,48 +107,60 @@ public class MeetupLSHMain {
         MinHashLSHModel model = mh.fit(vectorizedDF);
 
         model.transform(vectorizedDF)
-                .show();
+                .show(false);
 
-        Dataset<Row> similarPPL = model
-                .approxSimilarityJoin(vectorizedDF, vectorizedDF, THRESHOLD, "distance")
+        Dataset<Row> key = vectorizedDF.where("member_id = 69177262");
+        model.approxSimilarityJoin(vectorizedDF, key, THRESHOLD, "distance")
                 .select(col("datasetA.member_id").alias("ida"),
                         col("datasetA.member_name").alias("name_a"),
                         col("datasetA.urlkey").alias("urlkey_a"),
                         col("datasetB.member_id").alias("idb"),
                         col("datasetB.member_name").alias("name_b"),
                         col("datasetB.urlkey").alias("urlkey_b"),
-                        col("distance"));
+                        col("distance"))
+                .where("ida != idb")
+                .show(false);
 
-        similarPPL.show();
+//        Dataset<Row> similarPPL = model
+//                .approxSimilarityJoin(vectorizedDF, vectorizedDF, THRESHOLD, "distance")
+//                .select(col("datasetA.member_id").alias("ida"),
+//                        col("datasetA.member_name").alias("name_a"),
+//                        col("datasetA.urlkey").alias("urlkey_a"),
+//                        col("datasetB.member_id").alias("idb"),
+//                        col("datasetB.member_name").alias("name_b"),
+//                        col("datasetB.urlkey").alias("urlkey_b"),
+//                        col("distance"));
+//
+//        similarPPL.show();
 
-        JavaRDD<SimilarPeople> rdd = similarPPL
-                .javaRDD()
-                .filter(row -> row.getLong(0) != row.getLong(3))
-                .map(row -> {
-                    SimilarPeople s = new SimilarPeople();
-                    s.setIdA(row.getLong(0));
-                    s.setNameA(row.getString(1));
-                    s.setUrlkeyA(row.getList(2));
-                    s.setIdB(row.getLong(3));
-                    s.setNameB(row.getString(4));
-                    s.setUrlkeyB(row.getList(5));
-                    s.setDistance(row.getDouble(6));
-                    return s;
-                });
+//        JavaRDD<SimilarPeople> rdd = similarPPL
+//                .javaRDD()
+//                .filter(row -> row.getLong(0) != row.getLong(3))
+//                .map(row -> {
+//                    SimilarPeople s = new SimilarPeople();
+//                    s.setIdA(row.getLong(0));
+//                    s.setNameA(row.getString(1));
+//                    s.setUrlkeyA(row.getList(2));
+//                    s.setIdB(row.getLong(3));
+//                    s.setNameB(row.getString(4));
+//                    s.setUrlkeyB(row.getList(5));
+//                    s.setDistance(row.getDouble(6));
+//                    return s;
+//                });
 
-        Map<String, String> fieldToColumnMapping = new HashMap<>();
-        fieldToColumnMapping.put("idA", "id_a");
-        fieldToColumnMapping.put("nameA", "name_a");
-        fieldToColumnMapping.put("urlkeyA", "urlkey_a");
-        fieldToColumnMapping.put("idB", "id_b");
-        fieldToColumnMapping.put("nameB", "name_b");
-        fieldToColumnMapping.put("urlkeyB", "urlkey_b");
-        fieldToColumnMapping.put("distance", "distance");
+//        Map<String, String> fieldToColumnMapping = new HashMap<>();
+//        fieldToColumnMapping.put("idA", "id_a");
+//        fieldToColumnMapping.put("nameA", "name_a");
+//        fieldToColumnMapping.put("urlkeyA", "urlkey_a");
+//        fieldToColumnMapping.put("idB", "id_b");
+//        fieldToColumnMapping.put("nameB", "name_b");
+//        fieldToColumnMapping.put("urlkeyB", "urlkey_b");
+//        fieldToColumnMapping.put("distance", "distance");
 
-        CassandraJavaUtil.javaFunctions(rdd)
-                .writerBuilder(CASSANDRA_KEYSPACE, SIMILAR_PEOPLE_TABLE, CassandraJavaUtil.mapToRow(SimilarPeople.class, fieldToColumnMapping))
+//        CassandraJavaUtil.javaFunctions/(rdd)
+//                .writerBuilder(CASSANDRA_KEYSPACE, SIMILAR_PEOPLE_TABLE, CassandraJavaUtil.mapToRow(SimilarPeople.class, fieldToColumnMapping))
 //                .withConstantTTL(30)
-                .saveToCassandra();
+//                .saveToCassandra();
 
         spark.stop();
     }
