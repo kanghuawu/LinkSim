@@ -12,9 +12,11 @@ name_a text STATIC,
 urlkey_a list<text> STATIC,
 id_b bigint,
 name_b text,
+country_b text,
+state_b text,
 urlkey_b list<text>,
 distance double,
-PRIMARY KEY ((id_a), distance, id_b));
+PRIMARY KEY ((id_a), country_b, state_b, distance, id_b));
 
 CREATE TABLE IF NOT EXISTS meetup.tag_by_userid (
 id bigint,
