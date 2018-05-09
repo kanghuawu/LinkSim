@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="a25228de-a032-41bc-80a0-0b2bd44ad58e" name="Default" comment="">
+      <change beforePath="" afterPath="$PROJECT_DIR$/../server/src/main/java/com/cmpe280/meetup/geo_finder/Geo.java" />
       <change beforePath="$PROJECT_DIR$/../../MeetupSpark/src/main/java/com/khwu/lsh/MeetupLSHMain.java" afterPath="$PROJECT_DIR$/../../MeetupSpark/src/main/java/com/khwu/lsh/MeetupLSHMain.java" />
       <change beforePath="$PROJECT_DIR$/../../MeetupSpark/src/main/java/com/khwu/model/cassandra/SimilarPeople.java" afterPath="$PROJECT_DIR$/../../MeetupSpark/src/main/java/com/khwu/model/cassandra/SimilarPeople.java" />
       <change beforePath="$PROJECT_DIR$/../../MeetupSpark/src/main/java/com/khwu/util/Statistics.java" afterPath="$PROJECT_DIR$/../../MeetupSpark/src/main/java/com/khwu/util/Statistics.java" />
@@ -15,6 +16,7 @@
       <change beforePath="$PROJECT_DIR$/../server/src/main/java/com/cmpe280/meetup/repositories/SimilarPeopleRepository.java" afterPath="$PROJECT_DIR$/../server/src/main/java/com/cmpe280/meetup/repositories/SimilarPeopleRepository.java" />
       <change beforePath="$PROJECT_DIR$/../server/src/main/java/com/cmpe280/meetup/services/SimilarPeopleService.java" afterPath="$PROJECT_DIR$/../server/src/main/java/com/cmpe280/meetup/services/SimilarPeopleService.java" />
       <change beforePath="$PROJECT_DIR$/../server/src/main/resources/application.properties" afterPath="$PROJECT_DIR$/../server/src/main/resources/application.properties" />
+      <change beforePath="$PROJECT_DIR$/../server/src/main/resources/static/bundle.js" afterPath="$PROJECT_DIR$/../server/src/main/resources/static/bundle.js" />
       <change beforePath="$PROJECT_DIR$/../../cql/meetup.cql" afterPath="$PROJECT_DIR$/../../cql/meetup.cql" />
     </list>
     <ignored path="$PROJECT_DIR$/.tmp/" />
@@ -199,12 +201,12 @@
       <workItem from="1524629346099" duration="1860000" />
       <workItem from="1524846417186" duration="1220000" />
       <workItem from="1525422702087" duration="25460000" />
-      <workItem from="1525904406257" duration="993000" />
+      <workItem from="1525904406257" duration="1039000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="48018000" />
+    <option name="totallyTimeSpent" value="48064000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="197" y="23" width="1243" height="877" extended-state="0" />
