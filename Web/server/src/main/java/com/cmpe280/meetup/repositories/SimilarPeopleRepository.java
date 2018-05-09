@@ -10,8 +10,15 @@ import java.util.List;
 
 @Repository
 public interface SimilarPeopleRepository extends CrudRepository<SimilarPeople, Integer> {
-    @Query("SELECT * FROM similar_people LIMIT 30")
+    @Query("SELECT * FROM similar_people LIMIT 10")
     List<SimilarPeople> findAll();
-    @Query("SELECT * FROM similar_people WHERE id_a = :id")
+
+    @Query("SELECT * FROM similar_people WHERE id_a = :id LIMIT 10")
     List<SimilarPeople> findById(@Param("id")Long id);
+
+    @Query("SELECT * FROM similar_people WHERE id_a = :id AND country_b = :country LIMIT 10")
+    List<SimilarPeople> findByIdAndCountry(@Param("id")Long id, @Param("country")String country);
+
+    @Query("SELECT * FROM similar_people WHERE id_a = :id AND country_b = :country AND state_b = :state LIMIT 10")
+    List<SimilarPeople> findByIdAndCountryAndState(@Param("id")Long id, @Param("country")String country, @Param("state")String state);
 }

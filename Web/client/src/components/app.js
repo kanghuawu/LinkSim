@@ -1,6 +1,5 @@
 import React, {Component} from 'react';
 import SimilarTable from './similarTable';
-import SimpleMap from './map';
 
 export default class App extends Component {
     render() {
@@ -20,9 +19,6 @@ export default class App extends Component {
                     </div>
                 </div>
                 <SimilarTable/>
-                <div className="row" >
-
-                </div>
             </div>
 
         );

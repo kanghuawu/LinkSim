@@ -35,7 +35,7 @@ class SimilarTable extends Component {
                 <tr key={data.idA.toString() + data.idB.toString()}>
                     <th>{data.nameB}</th>
                     <th>{this.renderTags(data.urlkeyA, data.urlkeyB)}</th>
-                    <th>{data.distance}</th>
+                    <th>{data.distance.toFixed(2)}</th>
                 </tr>
             );
         });
