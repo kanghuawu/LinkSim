@@ -35,6 +35,7 @@ public class Utility {
     public final static String KAFKA_SERVERS = "KAFKA_SERVERS";
     public final static String ZOOKEEPER_SERVERS = "ZOOKEEPER_SERVERS";
     public final static String GEO_DATA = "GEO_DATA";
+    public final static String COUNTRY_CODE = "COUNTRY_CODE";
 
     public static Properties setUpConfig(String mode) {
         Properties prop = new Properties();
@@ -46,7 +47,8 @@ public class Utility {
                 DATA_SOURCE,
                 KAFKA_SERVERS,
                 ZOOKEEPER_SERVERS,
-                GEO_DATA));
+                GEO_DATA,
+                COUNTRY_CODE));
 
         try (InputStream input = new FileInputStream(file)) {
             prop.load(input);

@@ -16,5 +16,7 @@ public class SimilarPeople implements Serializable {
     private Long idB;
     private String nameB;
     private List<String> urlkeyB;
+    private String countryB;
+    private String stateB;
     private Double distance;
 }

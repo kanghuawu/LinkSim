@@ -9,6 +9,9 @@ import org.apache.spark.sql.types.StructType;
 
 import java.util.Properties;
 
+import static org.apache.spark.sql.functions.col;
+import static org.apache.spark.sql.functions.explode;
+
 public class Statistics {
     public static void main(String[] args) {
         Utility.setUpLogging();
@@ -47,7 +50,7 @@ public class Statistics {
 
         System.out.printf("Total Users: %d%n", df.select("member.member_id").distinct().count());
         System.out.printf("Total Groups: %d%n", df.select("group.group_id").distinct().count());
-        System.out.printf("Total Tags: %d%n", df.select("group.group_topics.urlkey").distinct().count());
+        System.out.printf("Total Tags: %d%n", df.select(explode(col("group.group_topics.urlkey"))).distinct().count());
         System.out.printf("Total Events: %d%n", df.select("event.event_id").distinct().count());
         System.out.printf("Total Reservations: %d%n", df.select("rsvp_id").distinct().count());
     }
