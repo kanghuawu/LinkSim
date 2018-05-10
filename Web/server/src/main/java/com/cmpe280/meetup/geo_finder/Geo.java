@@ -25,8 +25,6 @@ public class Geo {
     private String WORLD_DIR = "../../data/countries_feature_collections.geo.json.txt";
     private String US_DIR = "../../data/us-states_feature_collection.geo.json.txt";
     public static final String USA = "USA";
-    private final static String DEBUG_FILE = "../config/debug.txt";
-    private final static String PRODUCTION_FILE = "../config/production.txt";
 
     private Geo() throws IOException {
         InputStream worldStream = new FileInputStream(WORLD_DIR);

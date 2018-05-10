@@ -26,6 +26,7 @@ public class SimilarPeopleController {
 
     @GetMapping("")
     public ResponseEntity<Iterable<SimilarPeople>> getAll() {
+        logger.info("Searching all people");
         return new ResponseEntity<>(similarPeopleService.findAll(), HttpStatus.OK);
     }
 
