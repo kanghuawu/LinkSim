@@ -70,11 +70,10 @@ public class MeetupLSHMain {
                 .filter(line -> !line.contains(COUNTRY_CODE_HEADER))
                 .mapToPair(line -> new Tuple2<>(line.split(",")[1], line.split(",")[2]))
                 .collectAsMap();
-//        System.out.println("Country code: " + " " +code);
+
+        System.out.println("Country code: " + " " +code);
 
         Broadcast<Map<String, String>> bc = jsc.broadcast(code);
-
-        StructType schema = Schema.schema();
 
         JavaRDD<TagByUserId> tagRdd = javaFunctions(jsc)
                 .cassandraTable(CASSANDRA_KEYSPACE, TAG_BY_USERID, mapRowTo(TagByUserId.class));
@@ -105,7 +104,7 @@ public class MeetupLSHMain {
         Dataset<Row> aggDF = df.groupBy("member_id", "member_name", "group_country", "group_state")
                 .agg(collect_list(col("urlkey")).alias("urlkey"));
 
-        aggDF.show();
+//        aggDF.show();
 
         CountVectorizerModel cvModel = new CountVectorizer()
                 .setInputCol("urlkey")
@@ -132,8 +131,8 @@ public class MeetupLSHMain {
 
         MinHashLSHModel model = mh.fit(vectorizedDF);
 
-        model.transform(vectorizedDF)
-                .show(false);
+//        model.transform(vectorizedDF)
+//                .show(false);
 
         Dataset<Row> similarPPL = model
                 .approxSimilarityJoin(vectorizedDF, vectorizedDF, THRESHOLD, "distance")
