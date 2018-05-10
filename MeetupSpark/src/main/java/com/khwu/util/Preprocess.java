@@ -61,23 +61,23 @@ public class Preprocess {
                 .json(files)
                 .cache();
 
-//        JavaRDD<UserByName> rdd = df.select("member.member_name", "member.member_id")
-//                .toJavaRDD()
-//                .map(row -> {
-//                    UserByName userByName = new UserByName();
-//                    userByName.setName(row.getString(0));
-//                    userByName.setId(row.getLong(1));
-//                    return userByName;
-//                });
+        JavaRDD<UserByName> rdd = df.select("member.member_name", "member.member_id")
+                .toJavaRDD()
+                .map(row -> {
+                    UserByName userByName = new UserByName();
+                    userByName.setName(row.getString(0));
+                    userByName.setId(row.getLong(1));
+                    return userByName;
+                });
 
         Map<String, String> fieldToColumnMapping = new HashMap<>();
         fieldToColumnMapping.put("name", "name");
         fieldToColumnMapping.put("id", "id");
 
-//        CassandraJavaUtil.javaFunctions(rdd)
-//                .writerBuilder(CASSANDRA_KEYSPACE, USER_BY_NAME,
-//                        CassandraJavaUtil.mapToRow(UserByName.class, fieldToColumnMapping))
-//                .saveToCassandra();
+        CassandraJavaUtil.javaFunctions(rdd)
+                .writerBuilder(CASSANDRA_KEYSPACE, USER_BY_NAME,
+                        CassandraJavaUtil.mapToRow(UserByName.class, fieldToColumnMapping))
+                .saveToCassandra();
 
         JavaRDD<TagByUserId> tagRdd = df.select("member.member_id",
                 "member.member_name",
