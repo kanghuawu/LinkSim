@@ -9,7 +9,10 @@ import java.io.Serializable;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserByName implements Serializable {
-    private String name;
+public class TagByUserId implements Serializable  {
     private Long id;
+    private String name;
+    private String country;
+    private String state;
+    private String tag;
 }

@@ -1,23 +1,24 @@
 package com.khwu.util;
 
+import com.datastax.spark.connector.japi.CassandraJavaUtil;
+import com.khwu.model.cassandra.SimilarPeople;
 import com.khwu.model.sql.Schema;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.types.StructType;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 public class Utility {
 
     public final static String KAFKA_TOPIC_MEETUP = "meetup";
     public final static String KAFKA_TOPIC_GEO = "geo";
     public final static String CASSANDRA_KEYSPACE = "meetup";
+    public static final String TAG_BY_USERID = "tag_by_userid";
 
     public static void setUpLogging() {
         Logger.getLogger("org").setLevel(Level.WARN);

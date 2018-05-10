@@ -2,6 +2,7 @@ package com.khwu.lsh;
 
 import com.datastax.spark.connector.japi.CassandraJavaUtil;
 import com.khwu.model.cassandra.SimilarPeople;
+import com.khwu.model.cassandra.TagByUserId;
 import com.khwu.model.sql.Schema;
 import com.khwu.util.Utility;
 import org.apache.spark.SparkConf;
@@ -23,15 +24,15 @@ import java.util.Map;
 import java.util.Properties;
 
 import static com.datastax.spark.connector.japi.CassandraJavaUtil.javaFunctions;
+import static com.datastax.spark.connector.japi.CassandraJavaUtil.mapRowTo;
 import static com.khwu.util.Utility.*;
-import static org.apache.spark.sql.functions.callUDF;
-import static org.apache.spark.sql.functions.col;
-import static org.apache.spark.sql.functions.explode;
+import static org.apache.spark.sql.functions.*;
 
 public class MeetupLSHMain {
     private static final double THRESHOLD = 0.6;
     private static final String SIMILAR_PEOPLE_TABLE = "similar_people";
     private static final int HASH_TABLES = 5;
+    private static final String COUNTRY_CODE_HEADER = "English short name";
 
     public static void main(String[] args) {
         Utility.setUpLogging();
@@ -64,28 +65,28 @@ public class MeetupLSHMain {
                 .getOrCreate();
 
         JavaSparkContext jsc = JavaSparkContext.fromSparkContext(spark.sparkContext());
+
         Map<String, String> code = jsc.textFile(prop.getProperty(COUNTRY_CODE))
-                .filter(line -> !line.contains("English short name"))
+                .filter(line -> !line.contains(COUNTRY_CODE_HEADER))
                 .mapToPair(line -> new Tuple2<>(line.split(",")[1], line.split(",")[2]))
                 .collectAsMap();
-        System.out.println("Country code: " + " " +code);
+//        System.out.println("Country code: " + " " +code);
+
         Broadcast<Map<String, String>> bc = jsc.broadcast(code);
 
         StructType schema = Schema.schema();
 
-        String[] files = prop.getProperty(Utility.DATA_SOURCE).split(",");
+        JavaRDD<TagByUserId> tagRdd = javaFunctions(jsc)
+                .cassandraTable(CASSANDRA_KEYSPACE, TAG_BY_USERID, mapRowTo(TagByUserId.class));
 
-        Dataset<Row> df = spark.read()
-                .schema(schema)
-                .json(files);
+        Dataset<Row> df = spark.createDataFrame(tagRdd, TagByUserId.class)
+                .withColumnRenamed("id", "member_id")
+                .withColumnRenamed("name", "member_name")
+                .withColumnRenamed("country","group_country")
+                .withColumnRenamed("state", "group_state")
+                .withColumnRenamed("tag", "urlkey").cache();
 
-        Dataset<Row> subDF = df.select("member.member_id",
-                "member.member_name",
-                "group.group_topics.urlkey",
-                "group.group_country",
-                "group.group_state");
-
-        long urlKeyNum = subDF.select(explode(col("urlkey")))
+        long urlKeyNum = df.select("urlkey")
                 .distinct()
                 .count() + 1;
 
@@ -95,22 +96,27 @@ public class MeetupLSHMain {
 
         System.out.println(String.format("Url-keys: %d", urlKeyNum));
 
-        long memberNum = subDF.select("member_id")
+        long memberNum = df.select("member_id")
                 .distinct()
                 .count();
 
         System.out.println(String.format("Members: %d", memberNum));
+
+        Dataset<Row> aggDF = df.groupBy("member_id", "member_name", "group_country", "group_state")
+                .agg(collect_list(col("urlkey")).alias("urlkey"));
+
+        aggDF.show();
 
         CountVectorizerModel cvModel = new CountVectorizer()
                 .setInputCol("urlkey")
                 .setOutputCol("feature")
                 .setVocabSize((int) urlKeyNum)
                 .setMinDF(2)
-                .fit(subDF);
+                .fit(aggDF);
 
         spark.udf().register("isNoneZeroVector", (Vector v) -> v.numNonzeros() > 0, DataTypes.BooleanType);
 
-        Dataset<Row> vectorizedDF = cvModel.transform(subDF)
+        Dataset<Row> vectorizedDF = cvModel.transform(aggDF)
                 .filter(callUDF("isNoneZeroVector", col("feature")))
                 .select(col("member_id"),
                         col("member_name"),
@@ -129,20 +135,6 @@ public class MeetupLSHMain {
         model.transform(vectorizedDF)
                 .show(false);
 
-        Dataset<Row> key = vectorizedDF.where("member_id = 69177262");
-        model.approxSimilarityJoin(vectorizedDF, key, THRESHOLD, "distance")
-                .select(col("datasetA.member_id").alias("ida"),
-                        col("datasetA.member_name").alias("name_a"),
-                        col("datasetA.urlkey").alias("urlkey_a"),
-                        col("datasetB.member_id").alias("idb"),
-                        col("datasetB.member_name").alias("name_b"),
-                        col("datasetB.urlkey").alias("urlkey_b"),
-                        col("datasetB.group_country").alias("group_country"),
-                        col("datasetB.group_state").alias("group_state"),
-                        col("distance"))
-                .where("ida != idb")
-                .show(false);
-
         Dataset<Row> similarPPL = model
                 .approxSimilarityJoin(vectorizedDF, vectorizedDF, THRESHOLD, "distance")
                 .select(col("datasetA.member_id").alias("ida"),
@@ -155,8 +147,6 @@ public class MeetupLSHMain {
                         col("datasetB.group_state").alias("state_b"),
                         col("distance"))
                 .where("ida != idb");
-
-        similarPPL.show();
 
         JavaRDD<SimilarPeople> rdd = similarPPL
                 .javaRDD()
@@ -176,23 +166,59 @@ public class MeetupLSHMain {
                     return s;
                 }).filter(ppl -> ppl.getCountryB() != null);
 
-        Map<String, String> fieldToColumnMapping = new HashMap<>();
-        fieldToColumnMapping.put("idA", "id_a");
-        fieldToColumnMapping.put("nameA", "name_a");
-        fieldToColumnMapping.put("urlkeyA", "urlkey_a");
-        fieldToColumnMapping.put("idB", "id_b");
-        fieldToColumnMapping.put("nameB", "name_b");
-        fieldToColumnMapping.put("urlkeyB", "urlkey_b");
-        fieldToColumnMapping.put("countryB", "country_b");
-        fieldToColumnMapping.put("stateB", "state_b");
-        fieldToColumnMapping.put("distance", "distance");
+//        Dataset<Row> key = vectorizedDF.where("member_id = 203149682");
+//        Dataset<Row> myPPL = model.approxSimilarityJoin(vectorizedDF, key, THRESHOLD, "distance")
+//                .select(col("datasetA.member_id").alias("ida"),
+//                        col("datasetA.member_name").alias("name_a"),
+//                        col("datasetA.urlkey").alias("urlkey_a"),
+//                        col("datasetB.member_id").alias("idb"),
+//                        col("datasetB.member_name").alias("name_b"),
+//                        col("datasetB.urlkey").alias("urlkey_b"),
+//                        col("datasetB.group_country").alias("group_country"),
+//                        col("datasetB.group_state").alias("group_state"),
+//                        col("distance"))
+//                .where("ida != idb");
 
+//        JavaRDD<SimilarPeople> myRdd = myPPL
+//                .javaRDD()
+//                .map(row -> {
+//                    SimilarPeople s = new SimilarPeople();
+//                    s.setIdA(row.getLong(0));
+//                    s.setNameA(row.getString(1));
+//                    s.setUrlkeyA(row.getList(2));
+//                    s.setIdB(row.getLong(3));
+//                    s.setNameB(row.getString(4));
+//                    s.setUrlkeyB(row.getList(5));
+//                    s.setCountryB(bc.value().get(row.getString(6).toUpperCase()));
+//                    if (s.getCountryB() == null) return null;
+//                    if (row.getString(7) == null) s.setStateB("");
+//                    else s.setStateB(row.getString(7));
+//                    s.setDistance(row.getDouble(8));
+//                    return s;
+//                }).filter(ppl -> ppl.getCountryB() != null);
+
+        Map<String, String> fields = new HashMap<>();
+        fields.put("idA", "id_a");
+        fields.put("nameA", "name_a");
+        fields.put("urlkeyA", "urlkey_a");
+        fields.put("idB", "id_b");
+        fields.put("nameB", "name_b");
+        fields.put("urlkeyB", "urlkey_b");
+        fields.put("countryB", "country_b");
+        fields.put("stateB", "state_b");
+        fields.put("distance", "distance");
+
+//        saveToCassandra(myRdd, fields);
+        saveToCassandra(rdd, fields);
+
+        spark.stop();
+    }
+
+    public static void saveToCassandra(JavaRDD<SimilarPeople> rdd, Map<String, String> field) {
         CassandraJavaUtil.javaFunctions(rdd)
                 .writerBuilder(CASSANDRA_KEYSPACE, SIMILAR_PEOPLE_TABLE,
                         CassandraJavaUtil.mapToRow(SimilarPeople.class,
-                                fieldToColumnMapping))
+                                field))
                 .saveToCassandra();
-
-        spark.stop();
     }
 }
