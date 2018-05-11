@@ -11,8 +11,10 @@ export function fetchSimilarPeople({id, lat, lng}) {
     return dispatch => {
         axios.get(`${ROOT_URL}/similar/${id}/${lat}/${lng}`)
             .then(res => {
-                console.log(res.data);
-                dispatch({type: SIMILAR_PEOPLE, payload: res.data});
+                const data = res.data.sort(function (a, b) {
+                    return a.distance - b.distance;
+                });
+                dispatch({type: SIMILAR_PEOPLE, payload: data});
             })
             .catch(err => {
                 console.log(err);

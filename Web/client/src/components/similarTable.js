@@ -17,7 +17,8 @@ class SimilarTable extends Component {
     renderTags(own, tags) {
         // console.log(own);
         return <div>{tags.map(tag => {
-            const className = `btn btn-sm ${own.includes(tag) ? 'btn-outline-success' : 'btn-outline-warning'}`;
+            // const className = `btn btn-sm ${own.includes(tag) ? 'btn-outline-success' : 'btn-outline-warning'}`;
+            const className = 'btn btn-sm btn-outline-success';
             return <button className={className} key={tag}>{tag}</button>
         })}</div>
     }
@@ -35,7 +36,7 @@ class SimilarTable extends Component {
                 <tr key={data.idA.toString() + data.idB.toString()}>
                     <th>{data.nameB}</th>
                     <th>{this.renderTags(data.urlkeyA, data.urlkeyB)}</th>
-                    <th>{data.distance.toFixed(2)}</th>
+                    <th>{(1 - data.distance).toFixed(2)}</th>
                 </tr>
             );
         });
@@ -57,7 +58,7 @@ class SimilarTable extends Component {
                             <tr>
                                 <th>Name</th>
                                 <th>Tags</th>
-                                <th>Jaccard Distance</th>
+                                <th>Similarity</th>
                             </tr>
                             </thead>
                             <tbody>

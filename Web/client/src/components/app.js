@@ -11,8 +11,8 @@ export default class App extends Component {
                             <h3>How to use:</h3>
                             <ol>
                                 <li>Click on map</li>
-                                <li>Enter your name</li>
-                                <li>Click search</li>
+                                <li>Enter your name and click Submit</li>
+                                <li>Select your Id and click search</li>
                                 <li>Have a look at table</li>
                             </ol>
                         </div>
