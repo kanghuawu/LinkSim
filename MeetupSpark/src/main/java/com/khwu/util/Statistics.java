@@ -16,24 +16,24 @@ public class Statistics {
     public static void main(String[] args) {
         Utility.setUpLogging();
         Properties prop;
-        String master;
+
+        SparkConf conf = new SparkConf()
+                .setAppName("statistics");
 
         //noinspection Duplicates
         if (args.length > 0) {
             prop = Utility.setUpConfig(args[0]);
-            master = args[1];
+            conf.set("spark.driver.memory", "3g");
+            conf.set("spark.executor.memory", "3g");
+            conf.setMaster(args[1]);
         } else {
             prop = Utility.setUpConfig(Utility.DEBUG_MODE);
-            master = "local[*]";
+            conf.setMaster("local[*]");
         }
         if (prop == null) {
             System.out.println("Props missing...");
             return;
         }
-
-        SparkConf conf = new SparkConf()
-                .setMaster(master)
-                .setAppName("statistics");
 
         SparkSession spark = SparkSession
                 .builder()

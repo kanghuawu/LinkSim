@@ -28,24 +28,27 @@ public class Preprocess {
     public static void main(String[] args) {
         Utility.setUpLogging();
         Properties prop;
-        String master;
+
+        SparkConf conf = new SparkConf()
+                .setAppName("preprocess");
 
         //noinspection Duplicates
         if (args.length > 0) {
             prop = Utility.setUpConfig(args[0]);
-            master = args[1];
+            conf.set("spark.driver.memory", "3g");
+            conf.set("spark.executor.memory", "3g");
+            conf.setMaster(args[1]);
         } else {
             prop = Utility.setUpConfig(Utility.DEBUG_MODE);
-            master = "local[*]";
+            conf.setMaster("local[*]");
         }
         if (prop == null) {
             System.out.println("Props missing...");
             return;
         }
 
-        SparkConf conf = new SparkConf()
-                .setMaster(master)
-                .setAppName("preprocess");
+        conf.set("spark.cassandra.connection.host", prop.getProperty(Utility.CASSANDRA_HOST));
+        conf.set("spark.cassandra.connection.port", prop.getProperty(Utility.CASSANDRA_PORT));
 
         SparkSession spark = SparkSession
                 .builder()
