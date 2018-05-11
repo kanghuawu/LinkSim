@@ -29,9 +29,9 @@ import static com.khwu.util.Utility.*;
 import static org.apache.spark.sql.functions.*;
 
 public class MeetupLSHMain {
-    private static final double THRESHOLD = 0.6;
+    private static final double THRESHOLD = 0.5;
     private static final String SIMILAR_PEOPLE_TABLE = "similar_people";
-    private static final int HASH_TABLES = 5;
+    private static final int HASH_TABLES = 3;
     private static final String COUNTRY_CODE_HEADER = "English short name";
 
     public static void main(String[] args) {

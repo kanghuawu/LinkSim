@@ -55,6 +55,7 @@ public class Utility {
             prop.load(input);
             if (!names.equals(prop.stringPropertyNames())) {
                 System.out.println("Something missing...");
+                System.out.println(prop.stringPropertyNames());
                 return null;
             }
             prop.list(System.out);

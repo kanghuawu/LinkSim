@@ -3,6 +3,7 @@ package com.khwu.util;
 import com.datastax.spark.connector.japi.CassandraJavaUtil;
 import com.khwu.model.cassandra.TagByUserId;
 import com.khwu.model.cassandra.UserByName;
+import com.khwu.model.cassandra.UserLocation;
 import com.khwu.model.sql.Schema;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
@@ -24,6 +25,7 @@ import static org.apache.spark.sql.functions.explode;
 public class Preprocess {
 
     private static final String USER_BY_NAME = "user_by_name";
+    private static final String USER_LOCATION = "user_location";
 
     public static void main(String[] args) {
         Utility.setUpLogging();
@@ -112,5 +114,27 @@ public class Preprocess {
                 CassandraJavaUtil.mapToRow(TagByUserId.class, tagFieldToColumnMapping))
 //                .withConstantTTL(1000)
         .saveToCassandra();
+
+
+        JavaRDD<UserLocation> locationRdd = df.select("member.member_id","group.group_lat", "group.group_lon")
+                .where(col("group_lat").isNotNull().and(col("group_lon").isNotNull()))
+                .toJavaRDD()
+                .map(row -> {
+                    UserLocation userLocation = new UserLocation();
+                    userLocation.setId(row.getLong(0));
+                    userLocation.setLat(row.getFloat(1));
+                    userLocation.setLon(row.getFloat(2));
+                    return userLocation;
+                });
+
+        Map<String, String> locationFieldToColumnMapping = new HashMap<>();
+        fieldToColumnMapping.put("id", "id");
+        fieldToColumnMapping.put("lat", "lat");
+        fieldToColumnMapping.put("lon", "lon");
+
+        CassandraJavaUtil.javaFunctions(locationRdd)
+                .writerBuilder(CASSANDRA_KEYSPACE, USER_LOCATION,
+                        CassandraJavaUtil.mapToRow(UserLocation.class, locationFieldToColumnMapping))
+                .saveToCassandra();
     }
 }
