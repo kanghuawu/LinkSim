@@ -29,10 +29,11 @@ import static com.khwu.util.Utility.*;
 import static org.apache.spark.sql.functions.*;
 
 public class MeetupLSHMain {
-    private static final double THRESHOLD = 0.5;
+    private static final double THRESHOLD = 0.6;
     private static final String SIMILAR_PEOPLE_TABLE = "similar_people";
     private static final int HASH_TABLES = 3;
     private static final String COUNTRY_CODE_HEADER = "English short name";
+    private static final String CSV_SPLITTER = ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
 
     public static void main(String[] args) {
         Utility.setUpLogging();
@@ -69,7 +70,7 @@ public class MeetupLSHMain {
 
         Map<String, String> code = jsc.textFile(prop.getProperty(COUNTRY_CODE))
                 .filter(line -> !line.contains(COUNTRY_CODE_HEADER))
-                .mapToPair(line -> new Tuple2<>(line.split(",")[1], line.split(",")[2]))
+                .mapToPair(line -> new Tuple2<>(line.split(CSV_SPLITTER)[1], line.split(CSV_SPLITTER)[2]))
                 .collectAsMap();
 
         System.out.println("Country code: " + " " +code);
@@ -90,17 +91,13 @@ public class MeetupLSHMain {
                 .distinct()
                 .count() + 1;
 
-        if (urlKeyNum >= Integer.MAX_VALUE) {
-            urlKeyNum = Integer.MAX_VALUE;
-        }
-
-        System.out.println(String.format("Url-keys: %d", urlKeyNum));
+        System.out.printf("Url-keys: %d%n", urlKeyNum);
 
         long memberNum = df.select("member_id")
                 .distinct()
                 .count();
 
-        System.out.println(String.format("Members: %d", memberNum));
+        System.out.printf("Members: %d%n", memberNum);
 
         Dataset<Row> aggDF = df.groupBy("member_id", "member_name", "group_country", "group_state")
                 .agg(collect_list(col("urlkey")).alias("urlkey"));
