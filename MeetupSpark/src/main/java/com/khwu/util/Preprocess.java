@@ -92,13 +92,16 @@ public class Preprocess {
                 .withColumn("urlkey", explode(col("urlkey")))
                 .toJavaRDD()
                 .map(row -> {
-                    if (row.anyNull()) return null;
                     TagByUserId tagByUserId = new TagByUserId();
                     tagByUserId.setId(row.getLong(0));
-                    tagByUserId.setName(row.getString(1));
-                    tagByUserId.setCountry(row.getString(2));
-                    tagByUserId.setState(row.getString(3));
-                    tagByUserId.setTag(row.getString(4));
+                    if (row.getString(1) != null) tagByUserId.setName(row.getString(1));
+                    else tagByUserId.setName("");
+                    if (row.getString(2) != null) tagByUserId.setCountry(row.getString(2));
+                    else tagByUserId.setCountry("");
+                    if (row.getString(3) != null) tagByUserId.setState(row.getString(3));
+                    else tagByUserId.setState("");
+                    if (row.getString(4) != null) tagByUserId.setTag(row.getString(4));
+                    else tagByUserId.setTag("");
                     return tagByUserId;
                 }).filter(Objects::nonNull);
 
