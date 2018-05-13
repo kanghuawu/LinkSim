@@ -1,4 +1,4 @@
-package com.cmpe280.meetup.models;
+package com.khwu.meetup.models;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

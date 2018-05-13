@@ -1,6 +1,6 @@
-package com.cmpe280.meetup.repositories;
+package com.khwu.meetup.repositories;
 
-import com.cmpe280.meetup.models.UserByName;
+import com.khwu.meetup.models.UserByName;
 import org.springframework.data.cassandra.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;

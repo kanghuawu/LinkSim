@@ -1,6 +1,6 @@
-package com.cmpe280.meetup.controllers;
+package com.khwu.meetup.controllers;
 
-import com.cmpe280.meetup.repositories.UserByNameRepository;
+import com.khwu.meetup.repositories.UserByNameRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

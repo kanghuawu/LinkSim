@@ -1,4 +1,4 @@
-package com.cmpe280.meetup;
+package com.khwu.meetup;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

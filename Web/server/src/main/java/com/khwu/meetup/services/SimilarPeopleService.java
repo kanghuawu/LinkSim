@@ -1,9 +1,8 @@
-package com.cmpe280.meetup.services;
+package com.khwu.meetup.services;
 
-import com.cmpe280.meetup.controllers.SimilarPeopleController;
-import com.cmpe280.meetup.geo_finder.Geo;
-import com.cmpe280.meetup.models.SimilarPeople;
-import com.cmpe280.meetup.repositories.SimilarPeopleRepository;
+import com.khwu.meetup.geo_finder.Geo;
+import com.khwu.meetup.models.SimilarPeople;
+import com.khwu.meetup.repositories.SimilarPeopleRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +12,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.cmpe280.meetup.geo_finder.Geo.USA;
+import static com.khwu.meetup.geo_finder.Geo.USA;
 
 @Service
 public class SimilarPeopleService {

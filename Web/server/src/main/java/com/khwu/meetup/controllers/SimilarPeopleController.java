@@ -1,8 +1,7 @@
-package com.cmpe280.meetup.controllers;
+package com.khwu.meetup.controllers;
 
-import com.cmpe280.meetup.geo_finder.Geo;
-import com.cmpe280.meetup.models.SimilarPeople;
-import com.cmpe280.meetup.services.SimilarPeopleService;
+import com.khwu.meetup.models.SimilarPeople;
+import com.khwu.meetup.services.SimilarPeopleService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +9,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.util.List;
 
 

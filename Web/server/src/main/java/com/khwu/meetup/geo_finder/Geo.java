@@ -1,4 +1,4 @@
-package com.cmpe280.meetup.geo_finder;
+package com.khwu.meetup.geo_finder;
 
 import com.esri.core.geometry.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
