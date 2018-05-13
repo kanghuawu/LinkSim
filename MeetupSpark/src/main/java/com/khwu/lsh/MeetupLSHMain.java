@@ -29,7 +29,7 @@ import static com.khwu.util.Utility.*;
 import static org.apache.spark.sql.functions.*;
 
 public class MeetupLSHMain {
-    private static final double THRESHOLD = 0.6;
+    private static final double THRESHOLD = 0.7;
     private static final String SIMILAR_PEOPLE_TABLE = "similar_people";
     private static final int HASH_TABLES = 3;
     private static final String COUNTRY_CODE_HEADER = "English short name";
@@ -132,8 +132,21 @@ public class MeetupLSHMain {
 //        model.transform(vectorizedDF)
 //                .show(false);
 
+
+        Dataset<Row> key = vectorizedDF.where("member_id = 203149682");
+
+        Dataset<Row> joined = approximateJoin(model, vectorizedDF, key);
+
+        JavaRDD<SimilarPeople> rdd = toSimilarPeopleRDD(joined, bc);
+
+        saveToCassandra(rdd);
+
+        spark.stop();
+    }
+
+    private static Dataset<Row> approximateJoin(MinHashLSHModel model, Dataset<Row> vectorizedDFA, Dataset<Row> vectorizedDFB) {
         Dataset<Row> similarPPL = model
-                .approxSimilarityJoin(vectorizedDF, vectorizedDF, THRESHOLD, "distance")
+                .approxSimilarityJoin(vectorizedDFA, vectorizedDFB, THRESHOLD, "distance")
                 .select(col("datasetA.member_id").alias("ida"),
                         col("datasetA.member_name").alias("name_a"),
                         col("datasetA.urlkey").alias("urlkey_a"),
@@ -144,8 +157,11 @@ public class MeetupLSHMain {
                         col("datasetB.group_state").alias("state_b"),
                         col("distance"))
                 .where("ida != idb");
+        return similarPPL;
+    }
 
-        JavaRDD<SimilarPeople> rdd = similarPPL
+    private static JavaRDD<SimilarPeople> toSimilarPeopleRDD(Dataset<Row> df, Broadcast<Map<String, String>> bc) {
+        JavaRDD<SimilarPeople> rdd = df
                 .javaRDD()
                 .map(row -> {
                     SimilarPeople s = new SimilarPeople();
@@ -162,38 +178,10 @@ public class MeetupLSHMain {
                     s.setDistance(row.getDouble(8));
                     return s;
                 }).filter(ppl -> ppl.getCountryB() != null);
+        return rdd;
+    }
 
-//        Dataset<Row> key = vectorizedDF.where("member_id = 203149682");
-//        Dataset<Row> myPPL = model.approxSimilarityJoin(vectorizedDF, key, THRESHOLD, "distance")
-//                .select(col("datasetA.member_id").alias("ida"),
-//                        col("datasetA.member_name").alias("name_a"),
-//                        col("datasetA.urlkey").alias("urlkey_a"),
-//                        col("datasetB.member_id").alias("idb"),
-//                        col("datasetB.member_name").alias("name_b"),
-//                        col("datasetB.urlkey").alias("urlkey_b"),
-//                        col("datasetB.group_country").alias("group_country"),
-//                        col("datasetB.group_state").alias("group_state"),
-//                        col("distance"))
-//                .where("ida != idb");
-
-//        JavaRDD<SimilarPeople> myRdd = myPPL
-//                .javaRDD()
-//                .map(row -> {
-//                    SimilarPeople s = new SimilarPeople();
-//                    s.setIdA(row.getLong(0));
-//                    s.setNameA(row.getString(1));
-//                    s.setUrlkeyA(row.getList(2));
-//                    s.setIdB(row.getLong(3));
-//                    s.setNameB(row.getString(4));
-//                    s.setUrlkeyB(row.getList(5));
-//                    s.setCountryB(bc.value().get(row.getString(6).toUpperCase()));
-//                    if (s.getCountryB() == null) return null;
-//                    if (row.getString(7) == null) s.setStateB("");
-//                    else s.setStateB(row.getString(7));
-//                    s.setDistance(row.getDouble(8));
-//                    return s;
-//                }).filter(ppl -> ppl.getCountryB() != null);
-
+    private static void saveToCassandra(JavaRDD<SimilarPeople> rdd) {
         Map<String, String> fields = new HashMap<>();
         fields.put("idA", "id_a");
         fields.put("nameA", "name_a");
@@ -205,17 +193,10 @@ public class MeetupLSHMain {
         fields.put("stateB", "state_b");
         fields.put("distance", "distance");
 
-//        saveToCassandra(myRdd, fields);
-        saveToCassandra(rdd, fields);
-
-        spark.stop();
-    }
-
-    public static void saveToCassandra(JavaRDD<SimilarPeople> rdd, Map<String, String> field) {
         CassandraJavaUtil.javaFunctions(rdd)
                 .writerBuilder(CASSANDRA_KEYSPACE, SIMILAR_PEOPLE_TABLE,
                         CassandraJavaUtil.mapToRow(SimilarPeople.class,
-                                field))
+                                fields))
                 .saveToCassandra();
     }
 }
