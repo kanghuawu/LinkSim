@@ -1,4 +1,4 @@
-package com.cmpe280.meetup;
+package com.khwu.meetup;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
