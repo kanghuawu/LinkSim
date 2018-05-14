@@ -29,9 +29,9 @@ import static com.khwu.util.Utility.*;
 import static org.apache.spark.sql.functions.*;
 
 public class MeetupLSHMain {
-    private static final double THRESHOLD = 0.7;
+    private static final double THRESHOLD = 0.9;
     private static final String SIMILAR_PEOPLE_TABLE = "similar_people";
-    private static final int HASH_TABLES = 3;
+    private static final int HASH_TABLES = 5;
     private static final String COUNTRY_CODE_HEADER = "English short name";
     private static final String CSV_SPLITTER = ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
 
@@ -108,7 +108,7 @@ public class MeetupLSHMain {
                 .setInputCol("urlkey")
                 .setOutputCol("feature")
                 .setVocabSize((int) urlKeyNum)
-                .setMinDF(2)
+                .setMinDF(1)
                 .fit(aggDF);
 
         spark.udf().register("isNoneZeroVector", (Vector v) -> v.numNonzeros() > 0, DataTypes.BooleanType);
@@ -129,13 +129,13 @@ public class MeetupLSHMain {
 
         MinHashLSHModel model = mh.fit(vectorizedDF);
 
-//        model.transform(vectorizedDF)
-//                .show(false);
+        model.transform(vectorizedDF)
+                .show(false);
 
 
-        Dataset<Row> key = vectorizedDF.where("member_id = 203149682");
+//        Dataset<Row> key = vectorizedDF.where("member_id = 192517871");
 
-        Dataset<Row> joined = approximateJoin(model, vectorizedDF, key);
+        Dataset<Row> joined = approximateJoin(model, vectorizedDF, vectorizedDF);
 
         JavaRDD<SimilarPeople> rdd = toSimilarPeopleRDD(joined, bc);
 
@@ -144,7 +144,7 @@ public class MeetupLSHMain {
         spark.stop();
     }
 
-    private static Dataset<Row> approximateJoin(MinHashLSHModel model, Dataset<Row> vectorizedDFA, Dataset<Row> vectorizedDFB) {
+    public static Dataset<Row> approximateJoin(MinHashLSHModel model, Dataset<Row> vectorizedDFA, Dataset<Row> vectorizedDFB) {
         Dataset<Row> similarPPL = model
                 .approxSimilarityJoin(vectorizedDFA, vectorizedDFB, THRESHOLD, "distance")
                 .select(col("datasetA.member_id").alias("ida"),
@@ -160,7 +160,7 @@ public class MeetupLSHMain {
         return similarPPL;
     }
 
-    private static JavaRDD<SimilarPeople> toSimilarPeopleRDD(Dataset<Row> df, Broadcast<Map<String, String>> bc) {
+    public static JavaRDD<SimilarPeople> toSimilarPeopleRDD(Dataset<Row> df, Broadcast<Map<String, String>> bc) {
         JavaRDD<SimilarPeople> rdd = df
                 .javaRDD()
                 .map(row -> {
@@ -181,7 +181,7 @@ public class MeetupLSHMain {
         return rdd;
     }
 
-    private static void saveToCassandra(JavaRDD<SimilarPeople> rdd) {
+    public static void saveToCassandra(JavaRDD<SimilarPeople> rdd) {
         Map<String, String> fields = new HashMap<>();
         fields.put("idA", "id_a");
         fields.put("nameA", "name_a");
