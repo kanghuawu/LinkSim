@@ -1,5 +1,6 @@
 package com.khwu.lsh;
 
+import com.khwu.model.cassandra.SimilarPeople;
 import com.khwu.model.sql.Schema;
 import com.khwu.util.Utility;
 import com.linkedin.nn.algorithm.JaccardMinHashNNS;
@@ -20,13 +21,14 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import scala.Tuple2;
-import scala.Tuple3;
 
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
+import static com.khwu.lsh.MeetupLSHMain.*;
+import static com.khwu.util.Utility.COUNTRY_CODE;
 import static java.lang.Math.toIntExact;
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.explode;
@@ -81,7 +83,17 @@ public class LSHOptimizedMain {
 //        System.out.println(keys);
 
         JavaSparkContext jsc = JavaSparkContext.fromSparkContext(spark.sparkContext());
-        Broadcast<Map<String, Integer>> bc = jsc.broadcast(keys);
+
+        Map<String, String> code = jsc.textFile(prop.getProperty(COUNTRY_CODE))
+                .filter(line -> !line.contains(COUNTRY_CODE_HEADER))
+                .mapToPair(line -> new Tuple2<>(line.split(CSV_SPLITTER)[1], line.split(CSV_SPLITTER)[2]))
+                .collectAsMap();
+
+        System.out.println("Country code: " + " " +code);
+
+        Broadcast<Map<String, String>> bcCode = jsc.broadcast(code);
+
+        Broadcast<Map<String, Integer>> bcKey = jsc.broadcast(keys);
 
         LSHNearestNeighborSearchModel<JaccardMinHashModel> model =
                 new JaccardMinHashNNS("MinhashLSH" + UUID.randomUUID().toString().substring(0, 12))
@@ -97,13 +109,13 @@ public class LSHOptimizedMain {
                 df.select("member.member_id","group.group_topics.urlkey")
                 .toJavaRDD()
                 .map(row -> {
-                    int[] idx = row.getList(1).stream().map(key -> bc.value().get(key)).mapToInt(i -> i).toArray();
+                    int[] idx = row.getList(1).stream().map(key -> bcKey.value().get(key)).mapToInt(i -> i).toArray();
                     Arrays.sort(idx);
                     double[] val = new double[idx.length];
                     Arrays.fill(val, 1.0);
                     Tuple2<Object, Vector> res =
                             new Tuple2<>(row.getLong(0),
-                                    Vectors.sparse(bc.value().size(), idx, val));
+                                    Vectors.sparse(bcKey.value().size(), idx, val));
                     return res;
                 }).rdd();
 
@@ -112,12 +124,20 @@ public class LSHOptimizedMain {
                 .toJavaRDD()
                 .map(tu -> RowFactory.create(tu._1(), tu._2(), tu._3()));
         StructType nbSchema = DataTypes.createStructType(new StructField[]{
-                DataTypes.createStructField("idA", DataTypes.LongType, true),
-                DataTypes.createStructField("idB", DataTypes.LongType, true),
+                DataTypes.createStructField("ida", DataTypes.LongType, true),
+                DataTypes.createStructField("idb", DataTypes.LongType, true),
                 DataTypes.createStructField("distance", DataTypes.DoubleType, true),
         });
         Dataset<Row> nbDF = spark.createDataFrame(rdd, nbSchema);
-        nbDF.join(df.select(col("member.member_id").alias("idB"),
-                col("group.group_topics.urlkey").alias("urlkey")));
+        Dataset<Row> populatedDF = nbDF.join(df.select(col("member.member_id").alias("ida"),
+                col("group.group_topics.urlkey").alias("urlkey_a")))
+            .join(df.select(col("member.member_id").alias("idb"),
+                    col("group.group_country").alias("country_b"),
+                    col("group.group_state").alias("state_b"),
+                    col("group.group_topics.urlkey").alias("urlkey_b")));
+
+        JavaRDD<SimilarPeople> similarPeopleJavaRDD = MeetupLSHMain.toSimilarPeopleRDD(populatedDF, bcCode);
+
+        saveToCassandra(similarPeopleJavaRDD);
     }
 }

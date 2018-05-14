@@ -29,11 +29,12 @@ import static com.khwu.util.Utility.*;
 import static org.apache.spark.sql.functions.*;
 
 public class MeetupLSHMain {
+    public static final String COUNTRY_CODE_HEADER = "English short name";
+    public static final String CSV_SPLITTER = ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
+
     private static final double THRESHOLD = 0.9;
     private static final String SIMILAR_PEOPLE_TABLE = "similar_people";
     private static final int HASH_TABLES = 5;
-    private static final String COUNTRY_CODE_HEADER = "English short name";
-    private static final String CSV_SPLITTER = ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
 
     public static void main(String[] args) {
         Utility.setUpLogging();
