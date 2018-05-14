@@ -14,11 +14,21 @@ class SimilarTable extends Component {
         // this.props.fetchSimilarPeople();
     }
 
+    renderOwnTags() {
+        if (!this.props.data) {
+            return <div/>;
+        }
+        const className = 'btn btn-sm btn-outline-success';
+        return this.props.data[0].urlkeyA.map(tag => {
+            return <button className={className} key={tag}>{tag}</button>
+        })
+    }
+
     renderTags(own, tags) {
         // console.log(own);
         return <div>{tags.map(tag => {
-            // const className = `btn btn-sm ${own.includes(tag) ? 'btn-outline-success' : 'btn-outline-warning'}`;
-            const className = 'btn btn-sm btn-outline-success';
+            const className = `btn btn-sm ${own.includes(tag) ? 'btn-outline-success' : 'btn-outline-warning'}`;
+            // const className = 'btn btn-sm btn-outline-success';
             return <button className={className} key={tag}>{tag}</button>
         })}</div>
     }
@@ -52,7 +62,13 @@ class SimilarTable extends Component {
                     <InputForm/>
                 </div>
                 <div className="col">
-                    <div className="table-responsive">
+                    <div className="card">
+                        <h3 className="card-title">Your Tags</h3>
+                        <div className="card-body">
+                            {this.renderOwnTags()}
+                        </div>
+                    </div>
+                    <div className="table-responsive" style={{marginTop: '10px'}}>
                         <table className="table table-hover">
                             <thead>
                             <tr>
