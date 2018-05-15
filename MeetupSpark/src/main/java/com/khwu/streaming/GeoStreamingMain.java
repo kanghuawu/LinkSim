@@ -1,15 +1,18 @@
 package com.khwu.streaming;
 
+import com.datastax.spark.connector.japi.CassandraJavaUtil;
+import com.khwu.model.cassandra.UserLocationByState;
 import com.khwu.util.Utility;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
-import com.vividsolutions.jts.geom.Polygon;
 import kafka.serializer.StringDecoder;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.serializer.KryoSerializer;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
 import org.apache.spark.storage.StorageLevel;
 import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaPairInputDStream;
@@ -17,18 +20,18 @@ import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import org.apache.spark.streaming.kafka.KafkaUtils;
 import org.datasyslab.geospark.enums.FileDataSplitter;
 import org.datasyslab.geospark.enums.GridType;
-import org.datasyslab.geospark.enums.IndexType;
 import org.datasyslab.geospark.serde.GeoSparkKryoRegistrator;
 import org.datasyslab.geospark.spatialOperator.JoinQuery;
 import org.datasyslab.geospark.spatialRDD.PointRDD;
 import org.datasyslab.geospark.spatialRDD.PolygonRDD;
-import scala.Tuple2;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.khwu.util.Utility.*;
 
-public class StreamingMain {
+public class GeoStreamingMain {
+    private static String USER_LOCATION_BY_STATE_TABLE = "user_location_by_state";
 
     public static void main(String[] args) throws InterruptedException {
         Utility.setUpLogging();
@@ -77,13 +80,15 @@ public class StreamingMain {
                 param,
                 topics);
 
-//        kafkaStream.mapToPair(tup -> new Tuple2<>(tup._1, tup._2)).print();
+//        kafkaStream.map(tup -> tup._2).print();
 
         kafkaStream.map(tup -> tup._2)
                 .foreachRDD(rdd -> {
                     JavaRDD<Point> point = rdd.map(record -> {
                         String[] arr = record.split(",");
-                        return geoFactory.createPoint(new Coordinate(Double.parseDouble(arr[1]), Double.parseDouble(arr[2])));
+                        Point pt = geoFactory.createPoint(new Coordinate(Double.parseDouble(arr[1]), Double.parseDouble(arr[2])));
+                        pt.setUserData(arr[0]);
+                        return pt;
                     });
 
 
@@ -101,15 +106,51 @@ public class StreamingMain {
                         pointRDD.spatialPartitionedRDD.persist(StorageLevel.MEMORY_ONLY());
                         polygonRDD.spatialPartitionedRDD.persist(StorageLevel.MEMORY_ONLY());
 
-                        System.out.println(JoinQuery.SpatialJoinQuery(pointRDD, polygonRDD, false, false)
-                                .map(tup -> tup._1.getUserData().toString())
-                                .collect());
-//                        System.out.println(result);
-                        System.out.println(rdd.count());
+                        JavaRDD<Row> geoRdd = JoinQuery.SpatialJoinQuery(pointRDD, polygonRDD, false, false)
+                                .flatMap(tup -> {
+                                    Iterator<Row> li = tup._2
+                                            .stream()
+                                            .map(pt -> RowFactory.create(
+                                                    tup._1.getUserData().toString().substring(1, 3),
+                                                    pt.getUserData(),
+                                                    pt.getCoordinate().x,
+                                                    pt.getCoordinate().y))
+                                            .collect(Collectors.toList()).iterator();
+                                    return li;
+                                });
+//                        System.out.println(geoRdd.collect());
+                        JavaRDD<UserLocationByState> geoTypedRdd = toUserLocationByStateRDD(geoRdd);
+                        saveToCassandra(geoTypedRdd);
                     }
                 });
 
         jssc.start();
         jssc.awaitTermination();
+    }
+
+    private static JavaRDD<UserLocationByState> toUserLocationByStateRDD(JavaRDD<Row> rdd) {
+        return rdd
+                .map(row -> {
+                    UserLocationByState u = new UserLocationByState();
+                    u.setState(row.getString(0).toUpperCase());
+                    u.setId(Long.parseLong(row.getString(1)));
+                    u.setLon((float) row.getDouble(2));
+                    u.setLat((float) row.getDouble(3));
+                    return u;
+                });
+    }
+
+    private static void saveToCassandra(JavaRDD<UserLocationByState> rdd) {
+        Map<String, String> fields = new HashMap<>();
+        fields.put("state", "state");
+        fields.put("id", "id");
+        fields.put("lat", "lat");
+        fields.put("lon", "lon");
+
+        CassandraJavaUtil.javaFunctions(rdd)
+                .writerBuilder(CASSANDRA_KEYSPACE, USER_LOCATION_BY_STATE_TABLE,
+                        CassandraJavaUtil.mapToRow(UserLocationByState.class,
+                                fields))
+                .saveToCassandra();
     }
 }
