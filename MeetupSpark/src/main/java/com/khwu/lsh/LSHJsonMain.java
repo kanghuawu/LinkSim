@@ -30,7 +30,6 @@ import static org.apache.spark.sql.functions.explode;
 
 public class LSHJsonMain {
     private static final double THRESHOLD = 0.6;
-    private static final String SIMILAR_PEOPLE_TABLE = "similar_people";
     private static final int HASH_TABLES = 5;
 
     public static void main(String[] args) {
@@ -154,41 +153,6 @@ public class LSHJsonMain {
                 .where("ida != idb");
 
         similarPPL.show();
-
-        JavaRDD<SimilarPeople> rdd = similarPPL
-                .javaRDD()
-                .map(row -> {
-                    SimilarPeople s = new SimilarPeople();
-                    s.setIdA(row.getLong(0));
-                    s.setNameA(row.getString(1));
-                    s.setUrlkeyA(row.getList(2));
-                    s.setIdB(row.getLong(3));
-                    s.setNameB(row.getString(4));
-                    s.setUrlkeyB(row.getList(5));
-                    s.setCountryB(bc.value().get(row.getString(6).toUpperCase()));
-                    if (s.getCountryB() == null) return null;
-                    if (row.getString(7) == null) s.setStateB("");
-                    else s.setStateB(row.getString(7));
-                    s.setDistance(row.getDouble(8));
-                    return s;
-                }).filter(ppl -> ppl.getCountryB() != null);
-
-        Map<String, String> fieldToColumnMapping = new HashMap<>();
-        fieldToColumnMapping.put("idA", "id_a");
-        fieldToColumnMapping.put("nameA", "name_a");
-        fieldToColumnMapping.put("urlkeyA", "urlkey_a");
-        fieldToColumnMapping.put("idB", "id_b");
-        fieldToColumnMapping.put("nameB", "name_b");
-        fieldToColumnMapping.put("urlkeyB", "urlkey_b");
-        fieldToColumnMapping.put("countryB", "country_b");
-        fieldToColumnMapping.put("stateB", "state_b");
-        fieldToColumnMapping.put("distance", "distance");
-
-        CassandraJavaUtil.javaFunctions(rdd)
-                .writerBuilder(CASSANDRA_KEYSPACE, SIMILAR_PEOPLE_TABLE,
-                        CassandraJavaUtil.mapToRow(SimilarPeople.class,
-                                fieldToColumnMapping))
-                .saveToCassandra();
 
         spark.stop();
     }

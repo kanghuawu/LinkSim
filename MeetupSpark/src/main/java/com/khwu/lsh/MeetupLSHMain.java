@@ -25,16 +25,17 @@ import java.util.Properties;
 
 import static com.datastax.spark.connector.japi.CassandraJavaUtil.javaFunctions;
 import static com.datastax.spark.connector.japi.CassandraJavaUtil.mapRowTo;
+import static com.khwu.model.cassandra.SimilarPeople.saveToCassandra;
+import static com.khwu.model.cassandra.TagByUserId.TAG_BY_USERID;
 import static com.khwu.util.Utility.*;
 import static org.apache.spark.sql.functions.*;
 
 public class MeetupLSHMain {
     public static final String COUNTRY_CODE_HEADER = "English short name";
     public static final String CSV_SPLITTER = ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
-
     private static final double THRESHOLD = 0.9;
-    private static final String SIMILAR_PEOPLE_TABLE = "similar_people";
     private static final int HASH_TABLES = 5;
+
 
     public static void main(String[] args) {
         Utility.setUpLogging();
@@ -138,9 +139,7 @@ public class MeetupLSHMain {
 
         Dataset<Row> joined = approximateJoin(model, vectorizedDF, vectorizedDF);
 
-        JavaRDD<SimilarPeople> rdd = toSimilarPeopleRDD(joined, bc);
-
-        saveToCassandra(rdd);
+        saveToCassandra(joined, bc);
 
         spark.stop();
     }
@@ -159,45 +158,5 @@ public class MeetupLSHMain {
                         col("distance"))
                 .where("ida != idb");
         return similarPPL;
-    }
-
-    public static JavaRDD<SimilarPeople> toSimilarPeopleRDD(Dataset<Row> df, Broadcast<Map<String, String>> bc) {
-        JavaRDD<SimilarPeople> rdd = df
-                .javaRDD()
-                .map(row -> {
-                    SimilarPeople s = new SimilarPeople();
-                    s.setIdA(row.getLong(0));
-                    s.setNameA(row.getString(1));
-                    s.setUrlkeyA(row.getList(2));
-                    s.setIdB(row.getLong(3));
-                    s.setNameB(row.getString(4));
-                    s.setUrlkeyB(row.getList(5));
-                    s.setCountryB(bc.value().get(row.getString(6).toUpperCase()));
-                    if (s.getCountryB() == null) return null;
-                    if (row.getString(7) == null) s.setStateB("");
-                    else s.setStateB(row.getString(7));
-                    s.setDistance(row.getDouble(8));
-                    return s;
-                }).filter(ppl -> ppl.getCountryB() != null);
-        return rdd;
-    }
-
-    public static void saveToCassandra(JavaRDD<SimilarPeople> rdd) {
-        Map<String, String> fields = new HashMap<>();
-        fields.put("idA", "id_a");
-        fields.put("nameA", "name_a");
-        fields.put("urlkeyA", "urlkey_a");
-        fields.put("idB", "id_b");
-        fields.put("nameB", "name_b");
-        fields.put("urlkeyB", "urlkey_b");
-        fields.put("countryB", "country_b");
-        fields.put("stateB", "state_b");
-        fields.put("distance", "distance");
-
-        CassandraJavaUtil.javaFunctions(rdd)
-                .writerBuilder(CASSANDRA_KEYSPACE, SIMILAR_PEOPLE_TABLE,
-                        CassandraJavaUtil.mapToRow(SimilarPeople.class,
-                                fields))
-                .saveToCassandra();
     }
 }

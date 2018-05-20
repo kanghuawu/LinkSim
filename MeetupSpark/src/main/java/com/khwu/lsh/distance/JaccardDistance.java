@@ -2,13 +2,14 @@ package com.khwu.lsh.distance;
 
 import org.apache.spark.ml.linalg.Vector;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class JaccardDistance {
+public class JaccardDistance implements Serializable {
 
     public Double compute(Vector x, Vector y) {
         Set<Integer> xSet  = new HashSet<>(changeToList(x.toSparse().indices()));

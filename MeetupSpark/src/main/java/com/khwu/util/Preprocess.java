@@ -17,15 +17,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 
-import static com.khwu.util.Utility.CASSANDRA_KEYSPACE;
-import static com.khwu.util.Utility.TAG_BY_USERID;
+import static com.khwu.model.cassandra.TagByUserId.TAG_BY_USERID;
+import static com.khwu.model.cassandra.UserByName.USER_BY_NAME;
+import static com.khwu.model.cassandra.UserLocation.USER_LOCATION;
+import static com.khwu.util.Utility.*;
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.explode;
 
 public class Preprocess {
-
-    private static final String USER_BY_NAME = "user_by_name";
-    private static final String USER_LOCATION = "user_location";
 
     public static void main(String[] args) {
         Utility.setUpLogging();

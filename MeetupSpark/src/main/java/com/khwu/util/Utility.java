@@ -1,12 +1,13 @@
 package com.khwu.util;
 
 import com.datastax.spark.connector.japi.CassandraJavaUtil;
-import com.khwu.model.cassandra.SimilarPeople;
-import com.khwu.model.sql.Schema;
+import com.datastax.spark.connector.japi.CassandraStreamingJavaUtil;
+import com.khwu.model.cassandra.TagByUserId;
+import com.khwu.model.cassandra.UserLocationByState;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.types.StructType;
+import org.apache.spark.streaming.api.java.JavaDStream;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -15,10 +16,9 @@ import java.util.*;
 
 public class Utility {
 
-    public final static String KAFKA_TOPIC_MEETUP = "meetup";
-    public final static String KAFKA_TOPIC_GEO = "geo";
-    public final static String CASSANDRA_KEYSPACE = "meetup";
-    public static final String TAG_BY_USERID = "tag_by_userid";
+    public static final  String KAFKA_TOPIC_MEETUP = "meetup";
+    public static final  String KAFKA_TOPIC_GEO = "geo";
+    public static final  String CASSANDRA_KEYSPACE = "meetup";
 
     public static void setUpLogging() {
         Logger.getLogger("org").setLevel(Level.WARN);
@@ -30,13 +30,13 @@ public class Utility {
     public final static String PRODUCTION_MODE = "PRODUCTION_MODE";
     public final static String DEBUG_MODE = "DEBUG_MODE";
 
-    public final static String CASSANDRA_HOST = "CASSANDRA_HOST";
-    public final static String CASSANDRA_PORT = "CASSANDRA_PORT";
-    public final static String DATA_SOURCE = "DATA_SOURCE";
-    public final static String KAFKA_SERVERS = "KAFKA_SERVERS";
-    public final static String ZOOKEEPER_SERVERS = "ZOOKEEPER_SERVERS";
-    public final static String GEO_DATA = "GEO_DATA";
-    public final static String COUNTRY_CODE = "COUNTRY_CODE";
+    public static final String CASSANDRA_HOST = "CASSANDRA_HOST";
+    public static final String CASSANDRA_PORT = "CASSANDRA_PORT";
+    public static final String DATA_SOURCE = "DATA_SOURCE";
+    public static final String KAFKA_SERVERS = "KAFKA_SERVERS";
+    public static final String ZOOKEEPER_SERVERS = "ZOOKEEPER_SERVERS";
+    public static final String GEO_DATA = "GEO_DATA";
+    public static final String COUNTRY_CODE = "COUNTRY_CODE";
 
     public static Properties setUpConfig(String mode) {
         Properties prop = new Properties();

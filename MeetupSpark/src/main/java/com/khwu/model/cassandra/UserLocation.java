@@ -11,4 +11,6 @@ public class UserLocation {
     private Long id;
     private Float lat;
     private Float lon;
+
+    public static final  String USER_LOCATION = "user_location";
 }

@@ -12,4 +12,6 @@ import java.io.Serializable;
 public class UserByName implements Serializable {
     private String name;
     private Long id;
+
+    public static final  String USER_BY_NAME = "user_by_name";
 }

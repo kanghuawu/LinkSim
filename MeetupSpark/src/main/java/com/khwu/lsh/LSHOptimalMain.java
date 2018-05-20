@@ -1,11 +1,11 @@
 package com.khwu.lsh;
 
+import com.khwu.lsh.algorithm.JaccardMinHashNNS;
+import com.khwu.lsh.model.JaccardMinHashModel;
 import com.khwu.model.sql.Schema;
 import com.khwu.util.Utility;
-import com.linkedin.nn.algorithm.JaccardMinHashNNS;
-import com.linkedin.nn.model.JaccardMinHashModel;
-import com.linkedin.nn.model.LSHNearestNeighborSearchModel;
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.broadcast.Broadcast;
 import org.apache.spark.ml.linalg.Vector;
@@ -19,7 +19,6 @@ import scala.Tuple2;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Properties;
-import java.util.UUID;
 
 import static com.khwu.lsh.MeetupLSHMain.COUNTRY_CODE_HEADER;
 import static com.khwu.lsh.MeetupLSHMain.CSV_SPLITTER;
@@ -28,8 +27,7 @@ import static java.lang.Math.toIntExact;
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.explode;
 
-public class LSHOptimizedMain {
-
+public class LSHOptimalMain {
     public static void main(String[] args) {
         Utility.setUpLogging();
         Properties prop;
@@ -90,67 +88,30 @@ public class LSHOptimizedMain {
 
         Broadcast<Map<String, Integer>> bcKey = jsc.broadcast(keys);
 
-        LSHNearestNeighborSearchModel<JaccardMinHashModel> model =
-                new JaccardMinHashNNS("MinhashLSH" + UUID.randomUUID().toString().substring(0, 12))
+        JaccardMinHashModel model = new JaccardMinHashNNS()
                 .setNumHashes(2)
                 .setSignatureLength(1)
-                .setBucketLimit(100)
-                .setShouldSampleBuckets(false)
-                .setJoinParallelism(2)
                 .setNumOutputPartitions(1)
-                .createModel(keys.size());
+                .setBucketLimit(10)
+                .setJoinParallelism(10)
+                .setShouldSampleBuckets(true)
+                .createModel(bcKey.value().size());
 
-        df.select("member.member_id","group.group_topics.urlkey").show();
-
-        df.select("member.member_id","group.group_topics.urlkey")
+        JavaPairRDD<Long, Vector> rdd = df.select("member.member_id","group.group_topics.urlkey")
                 .toJavaRDD()
                 .map(row -> {
                     int[] idx = row.getList(1).stream().map(key -> bcKey.value().get(key)).mapToInt(i -> i).toArray();
                     Arrays.sort(idx);
                     double[] val = new double[idx.length];
                     Arrays.fill(val, 1.0);
-                    Tuple2<Object, Vector> res =
-                            new Tuple2<>(row.getLong(0),
-                                    Vectors.sparse(bcKey.value().size(), idx, val));
+                    Tuple2<Long, Vector> res = new Tuple2<>(row.getLong(0), Vectors.sparse(bcKey.value().size(), idx, val));
                     return res;
-                }).foreach(tu -> {
-            System.out.println(tu._1 + " " + tu._2);
-        });
-
-//        RDD<Tuple2<Object, Vector>> src =
-//                df.select("member.member_id","group.group_topics.urlkey")
-//                .toJavaRDD()
-//                .map(row -> {
-//                    int[] idx = row.getList(1).stream().map(key -> bcKey.value().get(key)).mapToInt(i -> i).toArray();
-//                    Arrays.sort(idx);
-//                    double[] val = new double[idx.length];
-//                    Arrays.fill(val, 1.0);
-//                    Tuple2<Object, Vector> res =
-//                            new Tuple2<>(row.getLong(0),
-//                                    Vectors.sparse(bcKey.value().size(), idx, val));
-//                    return res;
-//                }).rdd();
-
-//        model.getSelfAllNearestNeighbors(src, 10)
-//                .toJavaRDD()
-//                .map(tu -> RowFactory.create(tu._1(), tu._2(), tu._3())).collect();
-//
-//        JavaRDD<Row> rdd = model.getSelfAllNearestNeighbors(src, 10)
-//                .toJavaRDD()
-//                .map(tu -> RowFactory.create(tu._1(), tu._2(), tu._3()));
-//        StructType nbSchema = DataTypes.createStructType(new StructField[]{
-//                DataTypes.createStructField("ida", DataTypes.LongType, true),
-//                DataTypes.createStructField("idb", DataTypes.LongType, true),
-//                DataTypes.createStructField("distance", DataTypes.DoubleType, true),
+                }).mapToPair(x -> x);
+//        rdd.foreach(tu -> {
+//            System.out.println(tu._1 + " " +  tu._2);
 //        });
-//        Dataset<Row> nbDF = spark.createDataFrame(rdd, nbSchema);
-//        Dataset<Row> populatedDF = nbDF.join(df.select(col("member.member_id").alias("ida"),
-//                col("group.group_topics.urlkey").alias("urlkey_a")))
-//            .join(df.select(col("member.member_id").alias("idb"),
-//                    col("group.group_country").alias("country_b"),
-//                    col("group.group_state").alias("state_b"),
-//                    col("group.group_topics.urlkey").alias("urlkey_b")));
-//
-//        saveToCassandra(populatedDF, bcCode);
+        model.getAllNearestNeighbors(rdd, 10).foreach(tu -> {
+            System.out.println(tu._1() + " " + tu._2() + " " + tu._3());
+        });
     }
 }

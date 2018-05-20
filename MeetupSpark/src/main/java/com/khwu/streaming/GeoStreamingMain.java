@@ -1,6 +1,5 @@
 package com.khwu.streaming;
 
-import com.datastax.spark.connector.japi.CassandraJavaUtil;
 import com.khwu.model.cassandra.UserLocationByState;
 import com.khwu.util.Utility;
 import com.vividsolutions.jts.geom.Coordinate;
@@ -28,10 +27,10 @@ import org.datasyslab.geospark.spatialRDD.PolygonRDD;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.khwu.model.cassandra.UserLocationByState.saveToCassandra;
 import static com.khwu.util.Utility.*;
 
 public class GeoStreamingMain {
-    private static String USER_LOCATION_BY_STATE_TABLE = "user_location_by_state";
 
     public static void main(String[] args) throws InterruptedException {
         Utility.setUpLogging();
@@ -55,7 +54,7 @@ public class GeoStreamingMain {
                 .set("spark.serializer", KryoSerializer.class.getName())
                 .set("spark.kryo.registrator", GeoSparkKryoRegistrator.class.getName())
                 .setMaster(master)
-                .setAppName("stream-app");
+                .setAppName("stream-geo-app");
 
         JavaSparkContext jsc = new JavaSparkContext(conf);
 
@@ -108,9 +107,7 @@ public class GeoStreamingMain {
 
                         JavaRDD<Row> geoRdd = JoinQuery.SpatialJoinQuery(pointRDD, polygonRDD, false, false)
                                 .flatMap(tup -> {
-                                    Iterator<Row> li = tup._2
-                                            .stream()
-                                            .map(pt -> RowFactory.create(
+                                    Iterator<Row> li = tup._2.stream().map(pt -> RowFactory.create(
                                                     tup._1.getUserData().toString().substring(1, 3),
                                                     pt.getUserData(),
                                                     pt.getCoordinate().x,
@@ -118,7 +115,7 @@ public class GeoStreamingMain {
                                             .collect(Collectors.toList()).iterator();
                                     return li;
                                 });
-//                        System.out.println(geoRdd.collect());
+
                         JavaRDD<UserLocationByState> geoTypedRdd = toUserLocationByStateRDD(geoRdd);
                         saveToCassandra(geoTypedRdd);
                     }
@@ -128,7 +125,7 @@ public class GeoStreamingMain {
         jssc.awaitTermination();
     }
 
-    private static JavaRDD<UserLocationByState> toUserLocationByStateRDD(JavaRDD<Row> rdd) {
+    public static JavaRDD<UserLocationByState> toUserLocationByStateRDD(JavaRDD<Row> rdd) {
         return rdd
                 .map(row -> {
                     UserLocationByState u = new UserLocationByState();
@@ -138,19 +135,5 @@ public class GeoStreamingMain {
                     u.setLat((float) row.getDouble(3));
                     return u;
                 });
-    }
-
-    private static void saveToCassandra(JavaRDD<UserLocationByState> rdd) {
-        Map<String, String> fields = new HashMap<>();
-        fields.put("state", "state");
-        fields.put("id", "id");
-        fields.put("lat", "lat");
-        fields.put("lon", "lon");
-
-        CassandraJavaUtil.javaFunctions(rdd)
-                .writerBuilder(CASSANDRA_KEYSPACE, USER_LOCATION_BY_STATE_TABLE,
-                        CassandraJavaUtil.mapToRow(UserLocationByState.class,
-                                fields))
-                .saveToCassandra();
     }
 }
