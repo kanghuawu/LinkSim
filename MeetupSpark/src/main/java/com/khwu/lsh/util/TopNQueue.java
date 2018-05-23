@@ -8,7 +8,7 @@ import java.util.*;
 public class TopNQueue implements Serializable {
 
     private PriorityQueue<Tuple2<Long, Double>> priorityQ;
-    private Set<Long> elements;
+    private HashSet<Long> elements;
     private final int maxCapacity;
 
     public TopNQueue(int maxCapacity) {
@@ -40,11 +40,11 @@ public class TopNQueue implements Serializable {
         return !priorityQ.isEmpty();
     }
 
-    public Iterator<Tuple2<Long, Double>> iterator() {
-        LinkedList<Tuple2<Long, Double>> res = new LinkedList<>();
+    public ArrayList<Tuple2<Long, Double>> iterator() {
+        ArrayList<Tuple2<Long, Double>> res = new ArrayList<>();
         while (!priorityQ.isEmpty()) {
-            res.addFirst(priorityQ.poll());
+            res.add(priorityQ.poll());
         }
-        return res.iterator();
+        return res;
     }
 }

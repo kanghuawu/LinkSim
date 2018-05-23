@@ -63,9 +63,9 @@ public class JaccardMinHashNNS implements Serializable {
 
     public JaccardMinHashModel createModel(int dimension) {
         Random random = new Random(seed);
-        List<MinHashFunction> hashes = new LinkedList<>();
+        ArrayList<MinHashFunction> hashes = new ArrayList<>();
         for (int i = 0; i < numHashes / signatureLength; i++) {
-            List<Tuple2<Integer, Integer>> func = new LinkedList<>();
+            ArrayList<Tuple2<Integer, Integer>> func = new ArrayList<>();
             for (int j = 0; j < signatureLength; j++) {
                 func.add(new Tuple2<>(1 + random.nextInt(MinHashFunction.LARGE_PRIME - 1),
                         random.nextInt(MinHashFunction.LARGE_PRIME - 1)));

@@ -30,7 +30,7 @@ import static com.khwu.model.cassandra.TagByUserId.TAG_BY_USERID;
 import static com.khwu.util.Utility.*;
 import static org.apache.spark.sql.functions.*;
 
-public class MeetupLSHMain {
+public class MLLibLSHMain {
     public static final String COUNTRY_CODE_HEADER = "English short name";
     public static final String CSV_SPLITTER = ",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)";
     private static final double THRESHOLD = 0.9;
@@ -104,8 +104,6 @@ public class MeetupLSHMain {
         Dataset<Row> aggDF = df.groupBy("member_id", "member_name", "group_country", "group_state")
                 .agg(collect_list(col("urlkey")).alias("urlkey"));
 
-//        aggDF.show();
-
         CountVectorizerModel cvModel = new CountVectorizer()
                 .setInputCol("urlkey")
                 .setOutputCol("feature")
@@ -144,7 +142,7 @@ public class MeetupLSHMain {
         spark.stop();
     }
 
-    public static Dataset<Row> approximateJoin(MinHashLSHModel model, Dataset<Row> vectorizedDFA, Dataset<Row> vectorizedDFB) {
+    private static Dataset<Row> approximateJoin(MinHashLSHModel model, Dataset<Row> vectorizedDFA, Dataset<Row> vectorizedDFB) {
         Dataset<Row> similarPPL = model
                 .approxSimilarityJoin(vectorizedDFA, vectorizedDFB, THRESHOLD, "distance")
                 .select(col("datasetA.member_id").alias("ida"),

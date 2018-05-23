@@ -3,10 +3,7 @@ package com.khwu.lsh.distance;
 import org.apache.spark.ml.linalg.Vector;
 
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class JaccardDistance implements Serializable {
@@ -21,7 +18,7 @@ public class JaccardDistance implements Serializable {
         return 1.0 - (intersect.size() / (double) union.size());
     }
 
-    private List<Integer> changeToList(int[] arr) {
-        return Arrays.stream(arr).boxed().collect(Collectors.toList());
+    private ArrayList<Integer> changeToList(int[] arr) {
+        return Arrays.stream(arr).boxed().collect(Collectors.toCollection(ArrayList::new));
     }
 }
