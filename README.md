@@ -1,6 +1,7 @@
 # Meetup Streaming Analysis
 
-[demo](http://ec2-54-212-227-133.us-west-2.compute.amazonaws.com:8077/)
+[youtube](https://www.youtube.com/watch?v=E1BRSvokl5k)
+[slide](https://docs.google.com/presentation/d/11Kf2xpLBJsEpkKkzYEjY-h8L8dkQSIt_ZqJg6bE-yAQ/edit?usp=sharing)
 
 ## Project Idea
 
