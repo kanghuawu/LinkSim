@@ -3,7 +3,6 @@ package com.khwu.lsh;
 import com.khwu.lsh.algorithm.JaccardMinHashNNS;
 import com.khwu.lsh.model.JaccardMinHashModel;
 import com.khwu.model.cassandra.TagByUserId;
-import com.khwu.model.sql.Schema;
 import com.khwu.util.Utility;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -35,7 +34,6 @@ import static com.khwu.util.Utility.CASSANDRA_KEYSPACE;
 import static com.khwu.util.Utility.COUNTRY_CODE;
 import static java.lang.Math.toIntExact;
 import static org.apache.spark.sql.functions.col;
-import static org.apache.spark.sql.functions.explode;
 
 public class LSHOptimalMain {
     public static void main(String[] args) {
